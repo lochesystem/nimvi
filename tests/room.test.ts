@@ -9,6 +9,7 @@ test("quarto inicial ocupa somente slots compatíveis", () => {
   const room = createRoom();
   assert.equal(room.slots["side-left"], "plant");
   assert.equal(room.slots["wall-left"], "shelf");
+  assert.equal(Object.keys(room.slots).length, 3);
 });
 
 test("móvel não pode invadir slot incompatível", () => {
@@ -54,6 +55,14 @@ test("normalização remove invasões e itens desconhecidos", () => {
     slots: { ...createRoom().slots, "wall-left": "tv" },
   });
   assert.equal(room.slots["wall-left"], null);
+});
+
+test("a janela não possui slot de parede para móveis comuns", () => {
+  const room = createRoom(true);
+  assert.equal("wall-right" in room.slots, false);
+  for (const item of ROOM_ITEMS.filter((entry) => entry.category === "parede-objeto")) {
+    assert.deepEqual(item.slots, ["wall-left"]);
+  }
 });
 
 test("cada móvel usa um sprite PNG versionado", () => {

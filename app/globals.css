@@ -217,7 +217,6 @@ button { color: inherit; }
 .room-slot { position: absolute; display: grid; place-items: center; padding: 0; border: 0; background: transparent; pointer-events: auto; }
 .room-slot:disabled { color: inherit; }
 .slot-wall-left { left: 5%; top: 7%; width: 25%; height: 27%; }
-.slot-wall-right { right: 5%; top: 7%; width: 25%; height: 27%; }
 .slot-side-left { left: 4%; bottom: 13%; width: 24%; height: 35%; }
 .slot-side-right { right: 4%; bottom: 13%; width: 24%; height: 35%; }
 .room-slot.is-editing { cursor: pointer; }
@@ -342,8 +341,8 @@ button { color: inherit; }
   .identity-panel { grid-template-columns: 1fr; padding: 5px 8px 1px; }
   .pixel-window { top: 24px; right: 5%; width: 96px; height: 84px; border-width: 6px; }
   .shelf { top: 68px; left: 5%; width: 92px; }
-  .creature-stage { bottom: 61px; width: clamp(205px, 60vw, 245px); height: clamp(205px, 60vw, 245px); }
-  .floor-shadow { bottom: 58px; width: 150px; height: 13px; }
+  .creature-stage { bottom: calc(28% - 46px); width: clamp(205px, 60vw, 245px); height: clamp(205px, 60vw, 245px); }
+  .floor-shadow { bottom: calc(28% - 21px); width: 150px; height: 13px; }
   .speech-line { bottom: 11px; width: calc(100% - 28px); padding: 8px 9px; font-size: .66rem; }
   .care-card { padding: 14px; }
   .actions-card > p { margin: 7px 0 10px; }

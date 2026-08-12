@@ -41,7 +41,7 @@ Voltar → observar o estado → entender a necessidade → oferecer um cuidado 
 ## Casa Viva 0.3
 
 - O Nimvi permanece centralizado; móveis e ambiente produzem presença sem locomoção improvisada.
-- O quarto usa quatro slots laterais compatíveis; não há objetos diante do Nimvi, preservando corpo, asas, antenas e caudas.
+- O quarto usa três slots seguros; a área da janela fica reservada para uma futura categoria de cortinas.
 - Inventário inicial contém papéis de parede, pisos, móveis e objetos de chão.
 - TV, luminária, planta e caixa de brinquedos possuem interações contextuais.
 - A decoração é persistida localmente e saves antigos migram sem trocar o DNA.

@@ -11,7 +11,7 @@ export type RoomItem = {
   interactive?: "tv" | "lamp" | "plant" | "toy";
 };
 
-export const ROOM_SLOTS: RoomSlot[] = ["wall-left", "wall-right", "side-left", "side-right"];
+export const ROOM_SLOTS: RoomSlot[] = ["wall-left", "side-left", "side-right"];
 
 export const ROOM_ITEMS: RoomItem[] = [
   { id: "wall-cream", name: "Grade creme", category: "parede", slots: [] },
@@ -20,9 +20,9 @@ export const ROOM_ITEMS: RoomItem[] = [
   { id: "wall-peach", name: "Arcos pêssego", category: "parede", slots: [], asset: "/wallpapers/geometric-peach.png" },
   { id: "floor-stone", name: "Porcelanato branco", category: "piso", slots: [], asset: "/floors/porcelain-white.png" },
   { id: "floor-wood", name: "Vinílico de madeira", category: "piso", slots: [], asset: "/floors/vinyl-oak.png" },
-  { id: "shelf", name: "Prateleira", category: "parede-objeto", slots: ["wall-left", "wall-right"], asset: "/furniture/shelf.png" },
-  { id: "picture", name: "Quadro lunar", category: "parede-objeto", slots: ["wall-left", "wall-right"], asset: "/furniture/picture.png" },
-  { id: "mobile", name: "Móbile", category: "parede-objeto", slots: ["wall-left", "wall-right"], asset: "/furniture/mobile.png" },
+  { id: "shelf", name: "Prateleira", category: "parede-objeto", slots: ["wall-left"], asset: "/furniture/shelf.png" },
+  { id: "picture", name: "Quadro lunar", category: "parede-objeto", slots: ["wall-left"], asset: "/furniture/picture.png" },
+  { id: "mobile", name: "Móbile", category: "parede-objeto", slots: ["wall-left"], asset: "/furniture/mobile.png" },
   { id: "plant", name: "Planta", category: "movel", slots: ["side-left", "side-right"], asset: "/furniture/plant.png", interactive: "plant" },
   { id: "lamp", name: "Luminária", category: "movel", slots: ["side-left", "side-right"], asset: "/furniture/lamp.png", interactive: "lamp" },
   { id: "tv", name: "TV pixel", category: "movel", slots: ["side-left", "side-right"], asset: "/furniture/tv.png", interactive: "tv" },
@@ -45,7 +45,6 @@ export function createRoom(dev = false): NimviRoom {
     floor: "floor-stone",
     slots: {
       "wall-left": "shelf",
-      "wall-right": "picture",
       "side-left": "plant",
       "side-right": "lamp",
     },

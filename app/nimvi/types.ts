@@ -45,7 +45,7 @@ export type NimviCare = {
   lastActions: Partial<Record<NimviCareAction, number>>;
 };
 
-export type RoomSlot = "wall-left" | "wall-right" | "side-left" | "side-right";
+export type RoomSlot = "wall-left" | "side-left" | "side-right";
 export type RoomItemId =
   | "wall-cream" | "wall-mint" | "wall-dusk" | "wall-peach"
   | "floor-stone" | "floor-wood"
