@@ -1,20 +1,54 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
-if (!basePath) {
-  throw new Error("NEXT_PUBLIC_BASE_PATH is required to prepare GitHub Pages output.");
+const prefix = process.env.GITHUB_PAGES_PREFIX ?? "/nimvi";
+const outputDir = path.resolve("dist/client");
+
+const rewriteTargets = /\.(html|js|css|json|webmanifest|rsc)$/i;
+
+async function walk(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) files.push(...(await walk(fullPath)));
+    else files.push(fullPath);
+  }
+
+  return files;
 }
 
-const outputDir = path.resolve("dist/client");
-const manifestPath = path.join(outputDir, "manifest.webmanifest");
+function rewriteContent(content) {
+  let next = content;
 
-const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-manifest.start_url = `${basePath}/`;
-manifest.icons = manifest.icons.map((icon) => ({
-  ...icon,
-  src: icon.src.startsWith(basePath) ? icon.src : `${basePath}${icon.src}`,
-}));
+  const replacements = [
+    ['"/_next/', `"${prefix}/_next/`],
+    ["'/_next/", `'${prefix}/_next/`],
+    ['"/sprites/', `"${prefix}/sprites/`],
+    ["'/sprites/", `'${prefix}/sprites/`],
+    ['"/icon-', `"${prefix}/icon-`],
+    ["'/icon-", `'${prefix}/icon-`],
+    ['"/manifest.webmanifest', `"${prefix}/manifest.webmanifest`],
+    ["'/manifest.webmanifest", `'${prefix}/manifest.webmanifest`],
+    ['"/og.png', `"${prefix}/og.png`],
+    ["'/og.png", `'${prefix}/og.png`],
+    ['"start_url": "/"', `"start_url": "${prefix}/"`],
+  ];
 
-await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  for (const [from, to] of replacements) {
+    next = next.replaceAll(from, to);
+  }
+
+  return next;
+}
+
+const files = (await walk(outputDir)).filter((file) => rewriteTargets.test(file));
+
+for (const file of files) {
+  const content = await readFile(file, "utf8");
+  const rewritten = rewriteContent(content);
+  if (rewritten !== content) await writeFile(file, rewritten);
+}
+
 await writeFile(path.join(outputDir, ".nojekyll"), "");
