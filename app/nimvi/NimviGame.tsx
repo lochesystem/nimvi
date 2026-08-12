@@ -169,13 +169,6 @@ export function NimviGame() {
     }
   };
 
-  const reset = () => {
-    if (!window.confirm("Despedir-se deste Nimvi e despertar outro? Esta ação não pode ser desfeita.")) return;
-    const next = createFreshSave();
-    persist(next);
-    react("wake", "Um novo pulso apareceu na aba.");
-  };
-
   const activeSeed = visitorSeed || save?.seed;
   const genome = useMemo(() => activeSeed ? generateGenome(activeSeed) : null, [activeSeed]);
   const activeSave = visitorSeed && genome
@@ -285,7 +278,6 @@ export function NimviGame() {
 
       <footer className="game-footer">
         <button onClick={() => spriteRef.current?.download()}>Salvar retrato</button>
-        {!visitorSeed && <button onClick={reset}>Despertar outro</button>}
         <p>Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
       </footer>
     </main>
