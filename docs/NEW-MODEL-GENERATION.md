@@ -1,4 +1,4 @@
-# Geração dos dez novos modelos
+# Geração dos vinte modelos adicionais
 
 Modo usado: geração raster integrada (`imagegen`), seguida por remoção local de chroma key e QA de sprites.
 
@@ -26,3 +26,18 @@ Modo usado: geração raster integrada (`imagegen`), seguida por remoção local
 - **Ziru:** criatura flutuante em vírgula, cauda enrolada e crista dorsal.
 
 Os PNGs originais com chroma key e as versões com transparência ficam em `docs/source-art/`. Os assets finais ficam em `public/sprites/`.
+
+## Segunda coleção
+
+- **Rizo:** espírito-raiz vertical, pés bifurcados e coroa ramificada.
+- **Uvilo:** anfíbio horizontal, seis guelras externas e cauda-pá.
+- **Tavri:** besouro de carapaça facetada e antenas em zigue-zague.
+- **Kelo:** arraia flutuante em losango com duas caudas-fita.
+- **Bumo:** pequeno golem assimétrico de três pedras empilhadas.
+- **Neli:** criatura longa de cinco segmentos, seis pés e cauda-folha.
+- **Piri:** totem-coruja de olhos concêntricos e asas curtas.
+- **Savo:** criatura-flor radial de seis pétalas e pernas-vinha.
+- **Muru:** escavador baixo de nariz-estrela e grandes patas-pá.
+- **Vaski:** criatura-manto de asas plissadas e orelhas longas.
+
+Novos DNAs recebem o prefixo `N2`. Isso libera a coleção ampliada sem trocar o modelo de nenhum Nimvi que já existia antes desta coleção.

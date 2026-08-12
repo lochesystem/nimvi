@@ -21,6 +21,16 @@ MODELS = (
     ("Castu", "nimvi-castu.png"),
     ("Orumo", "nimvi-orumo.png"),
     ("Ziru", "nimvi-ziru.png"),
+    ("Rizo", "nimvi-rizo.png"),
+    ("Uvilo", "nimvi-uvilo.png"),
+    ("Tavri", "nimvi-tavri.png"),
+    ("Kelo", "nimvi-kelo.png"),
+    ("Bumo", "nimvi-bumo.png"),
+    ("Neli", "nimvi-neli.png"),
+    ("Piri", "nimvi-piri.png"),
+    ("Savo", "nimvi-savo.png"),
+    ("Muru", "nimvi-muru.png"),
+    ("Vaski", "nimvi-vaski.png"),
 )
 
 

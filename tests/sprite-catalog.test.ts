@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generateGenome, PALETTES } from "../app/nimvi/generator.ts";
+import { createSeed, generateGenome, PALETTES } from "../app/nimvi/generator.ts";
 import {
   SPRITE_MODELS,
   spriteFrameDuration,
@@ -9,12 +9,21 @@ import {
   spriteRowForReaction,
 } from "../app/nimvi/spriteCatalog.ts";
 
-test("o DNA escolhe somente um dos treze modelos fixos", () => {
+test("o DNA legado continua escolhendo somente um dos treze modelos originais", () => {
   for (let index = 0; index < 100; index += 1) {
     const genome = generateGenome(`CORPO-FIXO-${index}`);
-    assert.ok(SPRITE_MODELS.includes(spriteModelForGenome(genome)));
+    assert.ok(genome.model < 13);
     assert.equal(spriteModelForGenome(genome), SPRITE_MODELS[genome.model % SPRITE_MODELS.length]);
   }
+});
+
+test("novos DNAs podem escolher os vinte e três modelos sem alterar os antigos", () => {
+  const models = new Set(Array.from({ length: 4000 }, (_, index) => spriteModelForGenome(generateGenome(`N2MODELO${index}`)).name));
+  assert.equal(models.size, SPRITE_MODELS.length);
+});
+
+test("novos nascimentos recebem um DNA da coleção ampliada", () => {
+  assert.match(createSeed(), /^N2[A-Z0-9]{10}$/);
 });
 
 test("todos os modelos usam assets fixos versionados", () => {
@@ -23,9 +32,9 @@ test("todos os modelos usam assets fixos versionados", () => {
   }
 });
 
-test("uma amostra ampla de DNA distribui os treze modelos", () => {
+test("uma amostra ampla de DNA legado preserva os treze modelos", () => {
   const models = new Set(Array.from({ length: 1000 }, (_, index) => spriteModelForGenome(generateGenome(`MODELO-${index}`)).name));
-  assert.equal(models.size, SPRITE_MODELS.length);
+  assert.equal(models.size, 13);
 });
 
 test("o DNA ainda distribui as oito paletas", () => {

@@ -23,7 +23,7 @@ Os mapas semânticos continuam preservados para uma futura retomada da cor sem p
 
 ## Modelos fixos
 
-O runtime não cria geometria. O DNA escolhe deterministicamente um dos treze modelos aprovados. Os três modelos iniciais são:
+O runtime não cria geometria. DNAs legados continuam escolhendo deterministicamente um dos treze modelos originais; novos DNAs `N2` escolhem entre os vinte e três modelos aprovados. Os três modelos iniciais são:
 
 - **Brotinho:** corpo arredondado, folhas assimétricas e cauda espiral.
 - **Lúnula:** criatura baixa com antenas flexíveis, dorso em crescente e cauda espiral.

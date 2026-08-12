@@ -40,11 +40,11 @@ export function normalizeSeed(seed: string): string {
 }
 
 export function createSeed(): string {
-  const bytes = new Uint8Array(8);
+  const bytes = new Uint8Array(5);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
+  return `N2${Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
     .join("")
-    .toUpperCase()
+    .toUpperCase()}`
     .slice(0, 12);
 }
 
@@ -59,7 +59,7 @@ export function generateGenome(inputSeed: string): NimviGenome {
   return {
     seed,
     name: `${first}${last}`,
-    model: hashSeed(`${seed}:model`) % 13,
+    model: hashSeed(`${seed}:model`) % (seed.startsWith("N2") ? 23 : 13),
     body: pick(6),
     palette: pick(PALETTES.length),
     eyes: pick(7),

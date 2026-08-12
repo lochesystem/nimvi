@@ -20,6 +20,16 @@ export const SPRITE_MODELS = [
   { name: "Castu", src: sprite("/sprites/nimvi-castu.png?v=1") },
   { name: "Orumo", src: sprite("/sprites/nimvi-orumo.png?v=1") },
   { name: "Ziru", src: sprite("/sprites/nimvi-ziru.png?v=1") },
+  { name: "Rizo", src: sprite("/sprites/nimvi-rizo.png?v=1") },
+  { name: "Uvilo", src: sprite("/sprites/nimvi-uvilo.png?v=1") },
+  { name: "Tavri", src: sprite("/sprites/nimvi-tavri.png?v=1") },
+  { name: "Kelo", src: sprite("/sprites/nimvi-kelo.png?v=1") },
+  { name: "Bumo", src: sprite("/sprites/nimvi-bumo.png?v=1") },
+  { name: "Neli", src: sprite("/sprites/nimvi-neli.png?v=1") },
+  { name: "Piri", src: sprite("/sprites/nimvi-piri.png?v=1") },
+  { name: "Savo", src: sprite("/sprites/nimvi-savo.png?v=1") },
+  { name: "Muru", src: sprite("/sprites/nimvi-muru.png?v=1") },
+  { name: "Vaski", src: sprite("/sprites/nimvi-vaski.png?v=1") },
 ] as const;
 
 export function spriteModelForGenome(genome: NimviGenome) {

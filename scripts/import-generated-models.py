@@ -8,9 +8,12 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "docs/source-art/nimvi-new-models-keyed"
+SOURCE_V1 = ROOT / "docs/source-art/nimvi-new-models-keyed"
+SOURCE_V2 = ROOT / "docs/source-art/nimvi-new-models-2-keyed"
 DESTINATION = ROOT / "public/sprites"
-MODELS = ("mocori", "soruli", "aguari", "cravim", "tobiru", "paturi", "lumeli", "castu", "orumo", "ziru")
+MODELS_V1 = ("mocori", "soruli", "aguari", "cravim", "tobiru", "paturi", "lumeli", "castu", "orumo", "ziru")
+MODELS_V2 = ("rizo", "uvilo", "tavri", "kelo", "bumo", "neli", "piri", "savo", "muru", "vaski")
+MODELS = MODELS_V1 + MODELS_V2
 CELL_WIDTH = 313
 CELL_HEIGHT = 250
 OUTPUT_ROWS = 5
@@ -64,7 +67,8 @@ def crisp_monochrome(image: Image.Image) -> Image.Image:
 
 
 def build_model(model: str) -> Path:
-    source = Image.open(SOURCE / f"{model}.png").convert("RGBA")
+    source_dir = SOURCE_V1 if model in MODELS_V1 else SOURCE_V2
+    source = Image.open(source_dir / f"{model}.png").convert("RGBA")
     source_cell_width = source.width // 4
     source_cell_height = source.height // 2
     frames: list[Image.Image] = []
