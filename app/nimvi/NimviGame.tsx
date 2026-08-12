@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { withBasePath } from "../base-path";
 import {
   createFreshSave,
   generateGenome,
@@ -214,14 +215,14 @@ export function NimviGame() {
   return (
     <main className="game-shell" style={{ "--nimvi-accent": palette.accent, "--nimvi-body": palette.body } as React.CSSProperties}>
       <header className="topbar">
-        <Link className="brand-mark small" href="/" aria-label="Nimvi, início">nimvi<i /></Link>
+        <Link className="brand-mark small" href={withBasePath("/")} aria-label="Nimvi, início">nimvi<i /></Link>
         <div className="status-pill"><span /> {visitorSeed ? "visita" : "vivendo agora"}</div>
         <button className="quiet-button" onClick={() => share(genome.seed)}>{copied ? "link copiado" : "visitar por link"}</button>
       </header>
 
       {visitorSeed && (
         <div className="visitor-banner">
-          Você está visitando {genome.name}. <Link href="/">Voltar ao meu Nimvi</Link>
+          Você está visitando {genome.name}. <Link href={withBasePath("/")}>Voltar ao meu Nimvi</Link>
         </div>
       )}
 

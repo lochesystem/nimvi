@@ -6,6 +6,14 @@ const outputDir = path.resolve("dist/client");
 
 const rewriteTargets = /\.(html|js|css|json|webmanifest|rsc)$/i;
 
+const replacements = [
+  ["/_next/", `${prefix}/_next/`],
+  ["/sprites/", `${prefix}/sprites/`],
+  ["/icon-", `${prefix}/icon-`],
+  ["/manifest.webmanifest", `${prefix}/manifest.webmanifest`],
+  ["/og.png", `${prefix}/og.png`],
+];
+
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   const files = [];
@@ -22,25 +30,13 @@ async function walk(dir) {
 function rewriteContent(content) {
   let next = content;
 
-  const replacements = [
-    ['"/_next/', `"${prefix}/_next/`],
-    ["'/_next/", `'${prefix}/_next/`],
-    ['"/sprites/', `"${prefix}/sprites/`],
-    ["'/sprites/", `'${prefix}/sprites/`],
-    ['"/icon-', `"${prefix}/icon-`],
-    ["'/icon-", `'${prefix}/icon-`],
-    ['"/manifest.webmanifest', `"${prefix}/manifest.webmanifest`],
-    ["'/manifest.webmanifest", `'${prefix}/manifest.webmanifest`],
-    ['"/og.png', `"${prefix}/og.png`],
-    ["'/og.png", `'${prefix}/og.png`],
-    ['"start_url": "/"', `"start_url": "${prefix}/"`],
-  ];
-
   for (const [from, to] of replacements) {
-    next = next.replaceAll(from, to);
+    for (const quote of ['"', "'", "`"]) {
+      next = next.replaceAll(`${quote}${from}`, `${quote}${to}`);
+    }
   }
 
-  return next;
+  return next.replaceAll('"start_url": "/"', `"start_url": "${prefix}/"`);
 }
 
 const files = (await walk(outputDir)).filter((file) => rewriteTargets.test(file));
