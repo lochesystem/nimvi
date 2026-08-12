@@ -1,5 +1,5 @@
 import type { NimviGenome, NimviReaction } from "./types";
-import { withBasePath } from "../base-path";
+import { withBasePath } from "../base-path.ts";
 
 export const SPRITE_COLUMNS = 4;
 export const SPRITE_ROWS = 5;

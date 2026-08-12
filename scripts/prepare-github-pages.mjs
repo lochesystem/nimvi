@@ -9,8 +9,6 @@ const rewriteTargets = /\.(html|js|css|json|webmanifest|rsc)$/i;
 const replacements = [
   ["/_next/", `${prefix}/_next/`],
   ["_next/", `${prefix}/_next/`],
-  ["/sprites/", `${prefix}/sprites/`],
-  ["sprites/", `${prefix}/sprites/`],
   ["/icon-", `${prefix}/icon-`],
   ["/manifest.webmanifest", `${prefix}/manifest.webmanifest`],
   ["/og.png", `${prefix}/og.png`],
