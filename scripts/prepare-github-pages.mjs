@@ -8,7 +8,9 @@ const rewriteTargets = /\.(html|js|css|json|webmanifest|rsc)$/i;
 
 const replacements = [
   ["/_next/", `${prefix}/_next/`],
+  ["_next/", `${prefix}/_next/`],
   ["/sprites/", `${prefix}/sprites/`],
+  ["sprites/", `${prefix}/sprites/`],
   ["/icon-", `${prefix}/icon-`],
   ["/manifest.webmanifest", `${prefix}/manifest.webmanifest`],
   ["/og.png", `${prefix}/og.png`],
@@ -36,7 +38,9 @@ function rewriteContent(content) {
     }
   }
 
-  return next.replaceAll('"start_url": "/"', `"start_url": "${prefix}/"`);
+  return next
+    .replaceAll('"start_url": "/"', `"start_url": "${prefix}/"`)
+    .replaceAll(`${prefix}${prefix}/`, `${prefix}/`);
 }
 
 const files = (await walk(outputDir)).filter((file) => rewriteTargets.test(file));
