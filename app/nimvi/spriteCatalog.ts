@@ -3,6 +3,8 @@ import { withBasePath } from "../base-path.ts";
 
 export const SPRITE_COLUMNS = 4;
 export const SPRITE_ROWS = 5;
+// O último quadro do idle é a pose de piscada completa em todos os modelos.
+export const SLEEP_FRAME_INDEX = 3;
 
 const sprite = (path: string) => withBasePath(path);
 

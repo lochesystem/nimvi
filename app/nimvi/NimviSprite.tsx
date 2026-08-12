@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import {
   SPRITE_COLUMNS,
   SPRITE_ROWS,
+  SLEEP_FRAME_INDEX,
   spriteFrameDuration,
   spriteModelForGenome,
   spriteRowForReaction,
@@ -18,6 +19,7 @@ type Props = {
   genome: NimviGenome;
   reaction: NimviReaction;
   label: string;
+  sleeping?: boolean;
 };
 
 function neutralizeFrame(context: CanvasRenderingContext2D) {
@@ -71,7 +73,7 @@ function paint(
 }
 
 export const NimviSprite = forwardRef<NimviSpriteHandle, Props>(function NimviSprite(
-  { genome, reaction, label },
+  { genome, reaction, label, sleeping = false },
   forwardedRef,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,6 +86,10 @@ export const NimviSprite = forwardRef<NimviSpriteHandle, Props>(function NimviSp
     const sheet = new Image();
     let timer: number | null = null;
     sheet.onload = () => {
+      if (sleeping) {
+        paint(canvas, sheet, SLEEP_FRAME_INDEX, "blink");
+        return;
+      }
       paint(canvas, sheet, frame, reaction);
       timer = window.setInterval(() => {
         frame = (frame + 1) % SPRITE_COLUMNS;
@@ -95,7 +101,7 @@ export const NimviSprite = forwardRef<NimviSpriteHandle, Props>(function NimviSp
       sheet.onload = null;
       if (timer !== null) window.clearInterval(timer);
     };
-  }, [genome, model.src, reaction]);
+  }, [genome, model.src, reaction, sleeping]);
 
   useImperativeHandle(forwardedRef, () => ({
     download() {

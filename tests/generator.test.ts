@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { buildPixelFrame, frameSignature, generateGenome, getStage, GRID_SIZE, PALETTES, parseSave } from "../app/nimvi/generator.ts";
+import { buildPixelFrame, frameSignature, generateGenome, GRID_SIZE, PALETTES, parseSave } from "../app/nimvi/generator.ts";
+import { SLEEP_FRAME_INDEX, SPRITE_COLUMNS } from "../app/nimvi/spriteCatalog.ts";
 
 const silhouetteSimilarity = (left: ReturnType<typeof buildPixelFrame>, right: ReturnType<typeof buildPixelFrame>) => {
   const occupied = (frame: ReturnType<typeof buildPixelFrame>) => new Set(frame.flat().map((pixel, index) => pixel ? index : null).filter((index): index is number => index !== null));
@@ -36,13 +37,6 @@ test("save inválido não hidrata o jogo", () => {
   assert.equal(parseSave(JSON.stringify({ version: 99, seed: "X" })), null);
 });
 
-test("progressão tem três estágios determinísticos", () => {
-  const base = { version: 1 as const, seed: "TEST", bornAt: 1, lastSeenAt: 1, bond: 1, metrics: { visits: 1, interactions: 0, focusReturns: 0, hiddenSeconds: 0, resizes: 0, nightVisits: 0 } };
-  assert.equal(getStage(base), 1);
-  assert.equal(getStage({ ...base, metrics: { ...base.metrics, interactions: 10 } }), 2);
-  assert.equal(getStage({ ...base, metrics: { ...base.metrics, interactions: 40 } }), 3);
-});
-
 test("idle procedural tem frames distintos e mantém a baseline", () => {
   const genome = generateGenome("ANIMACAO-01");
   const frames = [0, 1, 2, 3].map((index) => buildPixelFrame(genome, 2, index, "idle"));
@@ -53,6 +47,10 @@ test("idle procedural tem frames distintos e mantém a baseline", () => {
     assert.equal(frame.length, GRID_SIZE);
     frame.forEach((row) => assert.equal(row.length, GRID_SIZE));
   });
+});
+
+test("sono usa a pose final de olhos fechados sem avançar o idle", () => {
+  assert.equal(SLEEP_FRAME_INDEX, SPRITE_COLUMNS - 1);
 });
 
 test("os dois olhos mantêm a mesma leitura entre poses abertas", () => {

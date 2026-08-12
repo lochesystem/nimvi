@@ -1,4 +1,5 @@
 import type { NimviGenome, NimviMetrics, NimviSave, PixelFrame } from "./types";
+import { createCare, normalizeCare } from "./care.ts";
 
 export const GRID_SIZE = 32;
 export const SAVE_KEY = "nimvi.save.v1";
@@ -75,7 +76,7 @@ export function generateGenome(inputSeed: string): NimviGenome {
 export function createFreshSave(seed = createSeed()): NimviSave {
   const now = Date.now();
   return {
-    version: 1,
+    version: 2,
     seed,
     bornAt: now,
     lastSeenAt: now,
@@ -87,7 +88,13 @@ export function createFreshSave(seed = createSeed()): NimviSave {
       hiddenSeconds: 0,
       resizes: 0,
       nightVisits: new Date(now).getHours() >= 20 || new Date(now).getHours() < 6 ? 1 : 0,
+      meals: 0,
+      baths: 0,
+      sleepSessions: 0,
+      medicines: 0,
+      refusals: 0,
     },
+    care: createCare(now),
   };
 }
 
@@ -95,9 +102,10 @@ export function parseSave(raw: string | null): NimviSave | null {
   if (!raw) return null;
   try {
     const value = JSON.parse(raw) as Partial<NimviSave>;
-    if (value.version !== 1 || typeof value.seed !== "string" || !value.metrics) return null;
+    if ((value.version !== 1 && value.version !== 2) || typeof value.seed !== "string" || !value.metrics) return null;
+    const now = Date.now();
     return {
-      version: 1,
+      version: 2,
       seed: normalizeSeed(value.seed),
       bornAt: Number(value.bornAt) || Date.now(),
       lastSeenAt: Number(value.lastSeenAt) || Date.now(),
@@ -109,18 +117,17 @@ export function parseSave(raw: string | null): NimviSave | null {
         hiddenSeconds: Math.max(0, Number(value.metrics.hiddenSeconds) || 0),
         resizes: Math.max(0, Number(value.metrics.resizes) || 0),
         nightVisits: Math.max(0, Number(value.metrics.nightVisits) || 0),
+        meals: Math.max(0, Number(value.metrics.meals) || 0),
+        baths: Math.max(0, Number(value.metrics.baths) || 0),
+        sleepSessions: Math.max(0, Number(value.metrics.sleepSessions) || 0),
+        medicines: Math.max(0, Number(value.metrics.medicines) || 0),
+        refusals: Math.max(0, Number(value.metrics.refusals) || 0),
       },
+      care: normalizeCare(value.care, now),
     };
   } catch {
     return null;
   }
-}
-
-export function getStage(save: NimviSave): 1 | 2 | 3 {
-  const activity = save.metrics.interactions + save.metrics.visits * 2 + save.metrics.focusReturns;
-  if (activity >= 36) return 3;
-  if (activity >= 12) return 2;
-  return 1;
 }
 
 export function getTrait(metrics: NimviMetrics): { name: string; description: string } {

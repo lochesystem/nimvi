@@ -6,17 +6,17 @@ import { withBasePath } from "../base-path";
 import {
   createFreshSave,
   generateGenome,
-  getStage,
   getTrait,
   PALETTES,
   parseSave,
   rarityLabel,
   SAVE_KEY,
 } from "./generator";
+import { advanceCare, careMood, CARE_TICK_MS, performCareAction } from "./care";
 import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
 import { spriteModelForGenome } from "./spriteCatalog";
 import { currentTimePeriod, TIME_PERIOD_LABELS, type TimePeriod } from "./timeOfDay";
-import type { NimviReaction, NimviSave } from "./types";
+import type { NimviCareAction, NimviReaction, NimviSave } from "./types";
 
 const formatAge = (bornAt: number) => {
   const minutes = Math.max(1, Math.floor((Date.now() - bornAt) / 60_000));
@@ -37,6 +37,7 @@ export function NimviGame() {
   const spriteRef = useRef<NimviSpriteHandle>(null);
   const reactionTimer = useRef<number | null>(null);
 
+  const hasLocalSave = Boolean(save);
   useEffect(() => {
     const refreshTimePeriod = () => setTimePeriod(currentTimePeriod());
     refreshTimePeriod();
@@ -61,13 +62,14 @@ export function NimviGame() {
       const existing = parseSave(localStorage.getItem(SAVE_KEY));
       if (existing) {
         const hour = new Date().getHours();
+        const advanced = advanceCare(existing);
         const next: NimviSave = {
-          ...existing,
+          ...advanced,
           lastSeenAt: Date.now(),
           metrics: {
-            ...existing.metrics,
-            visits: existing.metrics.visits + 1,
-            nightVisits: existing.metrics.nightVisits + (hour >= 20 || hour < 6 ? 1 : 0),
+            ...advanced.metrics,
+            visits: advanced.metrics.visits + 1,
+            nightVisits: advanced.metrics.nightVisits + (hour >= 20 || hour < 6 ? 1 : 0),
           },
         };
         persist(next);
@@ -77,7 +79,29 @@ export function NimviGame() {
     return () => window.clearTimeout(hydrateTimer);
   }, [persist]);
 
+  useEffect(() => {
+    if (!hasLocalSave || visitorSeed) return;
+    const timer = window.setInterval(() => {
+      setSave((current) => {
+        if (!current) return current;
+        const next = advanceCare(current);
+        localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+        return next;
+      });
+    }, CARE_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [hasLocalSave, visitorSeed]);
+
   const localSeed = save?.seed;
+  const illness = save?.care.illness;
+  useEffect(() => {
+    if (!illness || illness === "none" || visitorSeed) return;
+    const timer = window.setTimeout(() => {
+      setNotice(illness === "stomach" ? "A barriga está doendo. Ele precisa de medicamento." : "Ele parece abatido e espirrou baixinho.");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [illness, visitorSeed]);
+
   useEffect(() => {
     if (!localSeed) return;
     let hiddenAt: number | null = null;
@@ -95,13 +119,14 @@ export function NimviGame() {
       setNotice("Você voltou. Ele percebeu.");
       setSave((current) => {
         if (!current) return current;
+        const advanced = advanceCare(current);
         const next = {
-          ...current,
+          ...advanced,
           lastSeenAt: Date.now(),
           metrics: {
-            ...current.metrics,
-            focusReturns: current.metrics.focusReturns + 1,
-            hiddenSeconds: current.metrics.hiddenSeconds + elapsed,
+            ...advanced.metrics,
+            focusReturns: advanced.metrics.focusReturns + 1,
+            hiddenSeconds: advanced.metrics.hiddenSeconds + elapsed,
           },
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(next));
@@ -144,16 +169,11 @@ export function NimviGame() {
     react("wake", "Ele abriu os olhos pela primeira vez.");
   };
 
-  const interact = (kind: "love" | "play") => {
+  const interact = (kind: NimviCareAction) => {
     if (!save) return;
-    const next: NimviSave = {
-      ...save,
-      bond: Math.min(100, save.bond + (kind === "love" ? 3 : 2)),
-      lastSeenAt: Date.now(),
-      metrics: { ...save.metrics, interactions: save.metrics.interactions + 1 },
-    };
-    persist(next);
-    react(kind, kind === "love" ? "Um brilho morno apareceu." : "Ele se sacudiu de alegria.");
+    const result = performCareAction(save, kind);
+    persist({ ...result.save, lastSeenAt: Date.now() });
+    react(result.reaction, result.notice);
   };
 
   const share = async (seed: string) => {
@@ -171,11 +191,15 @@ export function NimviGame() {
 
   const activeSeed = visitorSeed || save?.seed;
   const genome = useMemo(() => activeSeed ? generateGenome(activeSeed) : null, [activeSeed]);
-  const activeSave = visitorSeed && genome
-    ? { ...createFreshSave(genome.seed), bond: 28, metrics: { visits: 5, interactions: 8, focusReturns: 4, hiddenSeconds: 900, resizes: 1, nightVisits: 2 } }
-    : save;
-  const naturalStage = activeSave ? getStage(activeSave) : 1;
-  const stage = naturalStage;
+  const activeSave = useMemo(() => {
+    if (!visitorSeed || !genome) return save;
+    const visitor = createFreshSave(genome.seed);
+    return {
+      ...visitor,
+      bond: 28,
+      metrics: { ...visitor.metrics, visits: 5, interactions: 8, focusReturns: 4, hiddenSeconds: 900, resizes: 1, nightVisits: 2 },
+    };
+  }, [genome, save, visitorSeed]);
   const trait = activeSave ? getTrait(activeSave.metrics) : null;
 
   useEffect(() => {
@@ -203,7 +227,16 @@ export function NimviGame() {
 
   if (!genome || !activeSave || !trait) return null;
   const palette = PALETTES[genome.palette];
-  const dreams = Math.floor(activeSave.metrics.hiddenSeconds / 300);
+  const mood = careMood(activeSave.care);
+  const illnessLabel = activeSave.care.illness === "cold" ? "resfriado" : activeSave.care.illness === "stomach" ? "dor de barriga" : null;
+  const needs = [
+    { label: "saciedade", value: 100 - activeSave.care.hunger, tone: activeSave.care.hunger >= 75 ? "critical" : "" },
+    { label: "higiene", value: activeSave.care.hygiene, tone: activeSave.care.hygiene <= 25 ? "critical" : "" },
+    { label: "energia", value: activeSave.care.energy, tone: activeSave.care.energy <= 25 ? "critical" : "" },
+    { label: "alegria", value: activeSave.care.happiness, tone: activeSave.care.happiness <= 30 ? "critical" : "" },
+    { label: "saúde", value: activeSave.care.health, tone: activeSave.care.illness !== "none" ? "sick" : "" },
+  ];
+  const priorityNeed = needs.reduce((lowest, need) => need.value < lowest.value ? need : lowest);
 
   return (
     <main className="game-shell" style={{ "--nimvi-accent": palette.accent, "--nimvi-body": palette.body } as React.CSSProperties}>
@@ -219,6 +252,7 @@ export function NimviGame() {
         </div>
       )}
 
+      <div className="game-layout">
       <section className="habitat" aria-label={`Habitat de ${genome.name}`}>
         <div className={`pixel-window time-${timePeriod}`} aria-hidden="true">
           <span className="time-label">{TIME_PERIOD_LABELS[timePeriod]}</span>
@@ -235,51 +269,101 @@ export function NimviGame() {
           onClick={() => !visitorSeed && interact("love")}
           aria-label={visitorSeed ? `${genome.name}, um Nimvi visitante` : `Fazer carinho em ${genome.name}`}
         >
-          <NimviSprite ref={spriteRef} genome={genome} reaction={reaction} label={`${genome.name}, Nimvi ${trait.name.toLowerCase()}`} />
+          <NimviSprite
+            ref={spriteRef}
+            genome={genome}
+            reaction={reaction}
+            sleeping={activeSave.care.isSleeping}
+            label={`${genome.name}, Nimvi ${trait.name.toLowerCase()}${activeSave.care.isSleeping ? ", dormindo" : ""}`}
+          />
           {reaction === "love" && <span className="pixel-heart">♥</span>}
+          {activeSave.care.isSleeping && <span className="sleep-symbol" aria-hidden="true">z Z</span>}
         </button>
         <div className="floor-shadow" aria-hidden="true" />
         <div className="speech-line" role="status">{notice}</div>
       </section>
 
-      <section className="identity-panel">
+      <div className="game-sidebar">
+      <section className="identity-panel identity-compact">
         <div>
           <p className="eyebrow">SEU NIMVI</p>
           <div className="identity-title">
             <h1>{genome.name}</h1>
-            <span>Estágio {stage}</span>
+            <span>{mood}</span>
           </div>
-          <p className="trait-copy"><strong>{trait.name}.</strong> {trait.description}</p>
-        </div>
-        <div className="dna-card">
-          <span>DNA NIMVI</span>
-          <strong>{genome.seed}</strong>
-          <small>Modelo {spriteModelForGenome(genome).name} · {PALETTES[genome.palette].name} · raridade {rarityLabel(genome)}</small>
         </div>
       </section>
 
-      <section className="dashboard">
-        <article className="care-card">
-          <div className="card-heading"><span>vínculo</span><strong>{activeSave.bond}%</strong></div>
-          <div className="meter"><i style={{ width: `${activeSave.bond}%` }} /></div>
-          <div className="action-row">
+      <details className="panel-toggle actions-toggle">
+        <summary>
+          <span>Cuidados</span>
+          <strong>{activeSave.care.isSleeping ? "dormindo" : "acordado"}<i aria-hidden="true" /></strong>
+        </summary>
+        <div className="toggle-content">
+          <p>Ele decide como responder de acordo com o que sente agora.</p>
+          <div className="care-glance" aria-label="Resumo rápido das necessidades">
+            {needs.map((need) => (
+              <span className={need.tone} key={need.label} title={`${need.label}: ${need.value}%`}>
+                <i style={{ height: `${need.value}%` }} />
+                <b>{need.label.slice(0, 3)}</b>
+              </span>
+            ))}
+          </div>
+          <div className="care-actions">
+            <button onClick={() => interact("feed")} disabled={Boolean(visitorSeed)}>Dar comida</button>
+            <button onClick={() => interact("bath")} disabled={Boolean(visitorSeed)}>Dar banho</button>
+            <button onClick={() => interact("sleep")} disabled={Boolean(visitorSeed)}>{activeSave.care.isSleeping ? "Acordar" : "Colocar para dormir"}</button>
+            <button onClick={() => interact("medicine")} disabled={Boolean(visitorSeed)}>Dar medicamento</button>
             <button onClick={() => interact("love")} disabled={Boolean(visitorSeed)}>Fazer carinho</button>
             <button onClick={() => interact("play")} disabled={Boolean(visitorSeed)}>Brincar</button>
           </div>
-        </article>
+        </div>
+      </details>
 
-        <article className="memory-card">
-          <div><span>idade</span><strong>{formatAge(activeSave.bornAt)}</strong></div>
-          <div><span>retornos</span><strong>{activeSave.metrics.focusReturns}</strong></div>
-          <div><span>sonhos</span><strong>{dreams}</strong></div>
-          <div><span>encontros</span><strong>{activeSave.metrics.visits}</strong></div>
-        </article>
-      </section>
+      <details className="panel-toggle needs-toggle">
+        <summary>
+          <span>Necessidades</span>
+          <strong>{priorityNeed.label} {priorityNeed.value}%<i aria-hidden="true" /></strong>
+        </summary>
+        <div className="toggle-content">
+          <div className="card-heading"><span>vínculo</span><strong>{activeSave.bond}%</strong></div>
+          <div className="meter"><i style={{ width: `${activeSave.bond}%` }} /></div>
+          <div className="needs-grid" aria-label="Necessidades do Nimvi">
+            {needs.map((need) => (
+              <div className={`need ${need.tone}`} key={need.label}>
+                <span>{need.label}</span><strong>{need.value}%</strong>
+                <div className="need-meter"><i style={{ width: `${need.value}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>
 
-      <footer className="game-footer">
-        <button onClick={() => spriteRef.current?.download()}>Salvar retrato</button>
-        <p>Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
-      </footer>
+      <details className="panel-toggle info-toggle">
+        <summary><span>Informações</span><strong>DNA e histórico<i aria-hidden="true" /></strong></summary>
+        <div className="toggle-content">
+          <p className="trait-copy">
+            <strong>{illnessLabel ? `Está com ${illnessLabel}.` : `${trait.name}.`}</strong>{" "}
+            {illnessLabel ? "Precisa de medicamento e um pouco de descanso." : trait.description}
+          </p>
+          <div className="dna-card">
+            <span>DNA NIMVI</span>
+            <strong>{genome.seed}</strong>
+            <small>Modelo {spriteModelForGenome(genome).name} · {PALETTES[genome.palette].name} · raridade {rarityLabel(genome)}</small>
+          </div>
+          <section className="life-summary" aria-label="Resumo da vida do Nimvi">
+            <span>idade <strong>{formatAge(activeSave.bornAt)}</strong></span>
+            <span>refeições <strong>{activeSave.metrics.meals}</strong></span>
+            <span>banhos <strong>{activeSave.metrics.baths}</strong></span>
+            <span>sonos <strong>{activeSave.metrics.sleepSessions}</strong></span>
+            <span>tratamentos <strong>{activeSave.metrics.medicines}</strong></span>
+          </section>
+          <button className="portrait-button" onClick={() => spriteRef.current?.download()}>Salvar retrato</button>
+          <p className="privacy-copy">Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
+        </div>
+      </details>
+      </div>
+      </div>
     </main>
   );
 }

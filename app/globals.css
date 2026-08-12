@@ -111,18 +111,20 @@ button { color: inherit; }
 .primary-button:hover, .action-row button:hover, .quiet-button:hover, .game-footer button:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
 .primary-button:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #377fff; outline-offset: 4px; }
 
-.game-shell { width: min(1040px, calc(100% - 28px)); margin: 0 auto; padding: 18px 0 40px; }
+.game-shell { width: min(1440px, calc(100% - 28px)); min-height: 100svh; margin: 0 auto; padding: 10px 0; }
 .topbar { min-height: 54px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; }
 .topbar .quiet-button { justify-self: end; background: transparent; box-shadow: none; padding: 8px 12px; }
 .status-pill { padding: 7px 12px; border: 1px solid rgba(23,20,43,.25); border-radius: 999px; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .status-pill span { display: inline-block; width: 7px; height: 7px; margin-right: 5px; background: var(--mint); animation: pixelPulse 1.4s steps(2) infinite; }
 .visitor-banner { margin: 10px 0; padding: 11px 14px; background: var(--ink); color: white; text-align: center; font-size: .8rem; }
 .visitor-banner a { color: var(--nimvi-accent); }
+.game-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 430px); gap: 22px; align-items: center; min-height: calc(100svh - 74px); }
+.game-sidebar { display: flex; min-width: 0; flex-direction: column; gap: 16px; }
 
 .habitat {
   position: relative;
-  height: min(58vh, 560px);
-  min-height: 390px;
+  height: min(72svh, 700px);
+  min-height: 440px;
   overflow: hidden;
   border: 3px solid var(--ink);
   background:
@@ -183,10 +185,12 @@ button { color: inherit; }
 .creature-stage { position: absolute; z-index: 3; left: 50%; bottom: 74px; display: grid; place-items: center; width: clamp(230px, 34vw, 330px); height: clamp(230px, 34vw, 330px); padding: 0; transform: translateX(-50%); border: 0; background: transparent; cursor: pointer; }
 .nimvi-sprite { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 .pixel-heart { position: absolute; top: 12%; right: 22%; color: #ed5d78; font: 900 36px Arial; animation: heartUp 1.3s steps(5) forwards; }
+.sleep-symbol { position: absolute; top: 16%; right: 17%; color: #6c65aa; font: 900 24px/1 "Courier New", monospace; animation: sleepFloat 1.8s steps(4) infinite; }
 .floor-shadow { position: absolute; left: 50%; bottom: 68px; width: 190px; height: 18px; transform: translateX(-50%); background: rgba(23,20,43,.22); }
 .speech-line { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); width: min(90%, 580px); padding: 10px 14px; background: var(--panel); border: 2px solid var(--ink); text-align: center; font-size: .76rem; box-shadow: 3px 3px 0 var(--ink); }
 
-.identity-panel { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: end; padding: 34px 8px 22px; }
+.identity-panel { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: end; padding: 0 8px 2px; }
+.identity-compact .eyebrow { margin: 0 0 7px; }
 .identity-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 5px 0 10px; }
 .identity-panel h1 { margin: 0; font: 900 clamp(2.5rem, 7vw, 5.5rem)/.9 Arial, sans-serif; letter-spacing: -.07em; }
 .identity-title > span { display: inline-block; padding: 5px 8px; border-left: 3px solid var(--nimvi-accent); font: 700 .72rem/1 "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
@@ -196,7 +200,24 @@ button { color: inherit; }
 .dna-card span, .dna-card small { display: block; color: var(--muted); font-size: .68rem; letter-spacing: .1em; }
 .dna-card strong { display: block; margin: 7px 0; font-size: clamp(1rem, 3vw, 1.45rem); letter-spacing: .12em; word-break: break-all; }
 
-.dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.panel-toggle { border: 2px solid var(--ink); background: rgba(255,250,240,.76); }
+.panel-toggle summary { display: flex; align-items: center; justify-content: space-between; min-height: 54px; gap: 14px; padding: 13px 16px; cursor: pointer; list-style: none; text-transform: uppercase; font-size: .72rem; letter-spacing: .08em; }
+.panel-toggle summary::-webkit-details-marker { display: none; }
+.panel-toggle summary > strong { display: flex; align-items: center; gap: 10px; font-size: .65rem; color: var(--muted); }
+.panel-toggle summary i { position: relative; display: inline-block; width: 15px; height: 15px; border: 1px solid var(--ink); background: var(--panel); }
+.panel-toggle summary i::before, .panel-toggle summary i::after { content: ""; position: absolute; background: var(--ink); }
+.panel-toggle summary i::before { width: 7px; height: 1px; left: 3px; top: 6px; }
+.panel-toggle summary i::after { width: 1px; height: 7px; left: 6px; top: 3px; }
+.panel-toggle[open] summary { border-bottom: 2px solid var(--ink); background: color-mix(in srgb, var(--nimvi-accent) 13%, var(--panel)); }
+.panel-toggle[open] summary i::after { display: none; }
+.toggle-content { padding: 16px; }
+.toggle-content > p:first-child { margin-top: 0; }
+.actions-toggle .toggle-content > p { color: var(--muted); font-size: .72rem; line-height: 1.45; }
+.info-toggle .dna-card { margin-top: 16px; }
+.portrait-button { margin-top: 14px; padding: 9px 12px; border: 2px solid var(--ink); background: transparent; cursor: pointer; font-size: .72rem; font-weight: 800; }
+.privacy-copy { margin: 12px 0 0; color: var(--muted); font-size: .62rem; line-height: 1.5; }
+
+.dashboard { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .care-card, .memory-card { border: 2px solid var(--ink); background: rgba(255,250,240,.76); padding: 20px; }
 .card-heading { display: flex; justify-content: space-between; text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; }
 .meter { height: 14px; margin: 12px 0 20px; padding: 2px; border: 2px solid var(--ink); }
@@ -205,6 +226,28 @@ button { color: inherit; }
 .action-row button { flex: 1; background: var(--panel); padding: 11px; }
 .action-row button:last-child { background: var(--nimvi-accent); }
 .action-row button:disabled { cursor: not-allowed; opacity: .42; box-shadow: none; }
+.needs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.need { padding: 10px; border: 1px solid rgba(23,20,43,.24); background: var(--panel); }
+.need:last-child { grid-column: 1 / -1; }
+.need > span { color: var(--muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; }
+.need > strong { float: right; font-size: .76rem; }
+.need-meter { clear: both; height: 8px; margin-top: 8px; background: var(--paper-deep); }
+.need-meter i { display: block; height: 100%; background: var(--nimvi-accent); transition: width .3s steps(5); }
+.need.critical .need-meter i { background: var(--coral); }
+.need.sick { border-color: var(--coral); box-shadow: inset 3px 0 var(--coral); }
+.actions-card > p { margin: 12px 0 16px; color: var(--muted); font-size: .72rem; line-height: 1.45; }
+.care-glance { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin: 0 0 16px; }
+.care-glance > span { position: relative; display: flex; align-items: flex-end; justify-content: center; height: 34px; overflow: hidden; border: 1px solid rgba(23,20,43,.25); background: var(--paper-deep); }
+.care-glance i { position: absolute; inset: auto 0 0; min-height: 2px; background: color-mix(in srgb, var(--nimvi-accent) 72%, white); }
+.care-glance .critical i, .care-glance .sick i { background: var(--coral); }
+.care-glance b { z-index: 1; width: 100%; padding: 3px 1px 2px; background: rgba(255,250,240,.82); font-size: .48rem; font-weight: 800; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+.care-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.care-actions button { min-height: 46px; padding: 8px; border: 2px solid var(--ink); background: var(--panel); box-shadow: 3px 3px 0 var(--ink); cursor: pointer; font-size: .72rem; font-weight: 800; }
+.care-actions button:nth-child(1), .care-actions button:nth-child(6) { background: var(--nimvi-accent); }
+.care-actions button:disabled { cursor: not-allowed; opacity: .42; box-shadow: none; }
+.life-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 18px; padding: 14px; border: 2px solid var(--ink); background: rgba(255,250,240,.5); }
+.life-summary span { color: var(--muted); font-size: .62rem; text-align: center; text-transform: uppercase; }
+.life-summary strong { display: block; margin-top: 4px; color: var(--ink); font-size: .9rem; }
 .memory-card { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .memory-card div { border-left: 4px solid var(--nimvi-body); padding-left: 12px; }
 .memory-card span { display: block; color: var(--muted); font-size: .68rem; text-transform: uppercase; }
@@ -218,19 +261,46 @@ button { color: inherit; }
 @keyframes blinkDot { 0%, 94%, 100% { transform: scaleY(1); } 96%, 98% { transform: scaleY(.1); } }
 @keyframes eggWobble { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-3deg); } 60% { transform: rotate(3deg); } }
 @keyframes heartUp { to { transform: translateY(-60px); opacity: 0; } }
+@keyframes sleepFloat { 50% { transform: translate(8px, -10px); opacity: .55; } }
 @keyframes drift { 50% { transform: translate(8px, -12px); opacity: .2; } }
 
 @media (max-width: 720px) {
-  .game-shell { width: min(100% - 18px, 1040px); padding-top: 8px; }
+  .game-shell { width: min(100% - 14px, 1040px); min-height: 0; padding: 6px 0 8px; }
   .topbar { grid-template-columns: 1fr auto; }
   .status-pill { display: none; }
-  .habitat { min-height: 430px; height: 62vh; }
-  .pixel-window { right: 5%; width: 112px; height: 98px; }
-  .shelf { left: 5%; width: 112px; }
-  .creature-stage { width: 260px; height: 260px; }
-  .identity-panel, .dashboard { grid-template-columns: 1fr; }
-  .identity-panel { padding-top: 28px; }
+  .game-layout { display: flex; flex-direction: column; justify-content: flex-start; gap: 10px; min-height: 0; }
+  .game-sidebar { width: 100%; gap: 8px; }
+  .habitat { width: 100%; min-height: 270px; height: min(42svh, 350px); }
+  .identity-panel { grid-template-columns: 1fr; padding: 5px 8px 1px; }
+  .pixel-window { top: 24px; right: 5%; width: 96px; height: 84px; border-width: 6px; }
+  .shelf { top: 68px; left: 5%; width: 92px; }
+  .creature-stage { bottom: 61px; width: clamp(205px, 60vw, 245px); height: clamp(205px, 60vw, 245px); }
+  .floor-shadow { bottom: 58px; width: 150px; height: 13px; }
+  .speech-line { bottom: 11px; width: calc(100% - 28px); padding: 8px 9px; font-size: .66rem; }
+  .care-card { padding: 14px; }
+  .actions-card > p { margin: 7px 0 10px; }
+  .care-glance { margin-bottom: 10px; }
+  .care-actions { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .care-actions button { min-height: 42px; padding: 6px 4px; font-size: .63rem; box-shadow: 2px 2px 0 var(--ink); }
+  .life-summary { grid-template-columns: repeat(2, 1fr); }
+  .life-summary span:last-child { grid-column: 1 / -1; }
+  .identity-panel h1 { font-size: clamp(2.3rem, 13vw, 4rem); }
+  .identity-title { margin-bottom: 2px; }
+  .dna-card { padding: 14px; }
+  .panel-toggle summary { min-height: 43px; padding: 9px 12px; }
+  .toggle-content { padding: 12px; }
   .game-footer p { text-align: left; }
+}
+
+@media (min-width: 721px) {
+  .habitat { align-self: center; }
+}
+
+@media (min-width: 721px) and (max-width: 980px) {
+  .game-layout { grid-template-columns: 1fr 360px; }
+  .identity-panel { grid-template-columns: 1fr; padding-top: 20px; }
+  .habitat { height: calc(100svh - 32px); min-height: 520px; }
+  .care-actions { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
