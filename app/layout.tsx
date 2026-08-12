@@ -1,36 +1,33 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { withBasePath } from "./base-path";
 import "./globals.css";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const incoming = await headers();
-  const host = incoming.get("x-forwarded-host") || incoming.get("host") || "localhost:3000";
-  const protocol = incoming.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
-  const base = new URL(`${protocol}://${host}`);
+export const dynamic = "force-static";
 
-  return {
-    metadataBase: base,
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lochesystem.github.io/nimvi";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: "Nimvi",
+  description: "Uma criatura pixel art única nasceu na sua aba.",
+  manifest: withBasePath("/manifest.webmanifest"),
+  themeColor: "#17142b",
+  icons: {
+    icon: withBasePath("/icon-192.png"),
+    apple: withBasePath("/icon-192.png"),
+  },
+  openGraph: {
     title: "Nimvi",
-    description: "Uma criatura pixel art única nasceu na sua aba.",
-    manifest: "/manifest.webmanifest",
-    themeColor: "#17142b",
-    icons: {
-      icon: "/icon-192.png",
-      apple: "/icon-192.png",
-    },
-    openGraph: {
-      title: "Nimvi",
-      description: "Algo está vivendo nesta aba.",
-      images: [{ url: new URL("/og.png", base).toString(), width: 1200, height: 630, alt: "Nimvi, uma criatura pixel art única" }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Nimvi",
-      description: "Algo está vivendo nesta aba.",
-      images: [new URL("/og.png", base).toString()],
-    },
-  };
-}
+    description: "Algo está vivendo nesta aba.",
+    images: [{ url: withBasePath("/og.png"), width: 1200, height: 630, alt: "Nimvi, uma criatura pixel art única" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nimvi",
+    description: "Algo está vivendo nesta aba.",
+    images: [withBasePath("/og.png")],
+  },
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
