@@ -4,7 +4,7 @@
 
 ## Estado atual
 
-Vertical slice jogável com nascimento, DNA determinístico, três modelos fixos animados, oito paletas, seis padrões corporais, reações a foco/ausência, vínculo, retrato e visita por link.
+Vertical slice jogável com nascimento, DNA determinístico, 23 modelos animados, necessidades persistentes, Casa Viva decorável, vínculo, retrato e visita por link.
 
 ## Como funciona
 
@@ -14,6 +14,8 @@ Vertical slice jogável com nascimento, DNA determinístico, três modelos fixos
 - A spritesheet é recortada e colorida localmente; o servidor não precisa armazenar a criatura.
 - O save usa a chave versionada `nimvi.save.v1` no armazenamento do navegador.
 - Links com `?dna=...` abrem uma visita sem substituir o Nimvi local.
+- O quarto possui quatro posições laterais seguras, inventário local e objetos interativos.
+- `?dev=1` abre um perfil de testes separado, com catálogo completo e controles de estado.
 
 ## Desenvolvimento
 
@@ -26,5 +28,5 @@ npm run build
 ## Limites conscientes desta versão
 
 - O save ainda é local ao dispositivo.
-- A progressão usa hábitos da própria página; nesta fase ela ainda não muda a anatomia.
+- O modo DEV é local e não é uma conta autenticada no servidor.
 - A visita é uma reconstrução determinística, não uma sessão multiplayer.

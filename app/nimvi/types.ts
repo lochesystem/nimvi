@@ -45,14 +45,34 @@ export type NimviCare = {
   lastActions: Partial<Record<NimviCareAction, number>>;
 };
 
+export type RoomSlot = "wall-left" | "wall-right" | "side-left" | "side-right";
+export type RoomItemId =
+  | "wall-cream" | "wall-mint" | "wall-dusk" | "wall-peach"
+  | "floor-stone" | "floor-wood"
+  | "shelf" | "picture" | "mobile" | "plant" | "lamp" | "tv" | "table" | "cushion" | "bed" | "toybox";
+
+export type NimviRoom = {
+  wallpaper: RoomItemId;
+  floor: RoomItemId;
+  slots: Record<RoomSlot, RoomItemId | null>;
+  inventory: RoomItemId[];
+  objectStates: {
+    tvOn: boolean;
+    lampOn: boolean;
+    plantGrowth: number;
+    plantLastWateredAt: number | null;
+  };
+};
+
 export type NimviSave = {
-  version: 2;
+  version: 3;
   seed: string;
   bornAt: number;
   lastSeenAt: number;
   bond: number;
   metrics: NimviMetrics;
   care: NimviCare;
+  room: NimviRoom;
 };
 
 export type NimviReaction = "idle" | "blink" | "love" | "play" | "wake";

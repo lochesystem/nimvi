@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { withBasePath } from "../base-path";
 import {
@@ -14,9 +14,13 @@ import {
 } from "./generator";
 import { advanceCare, careMood, CARE_TICK_MS, performCareAction } from "./care";
 import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
+import { NimviRoom, RoomInventory } from "./NimviRoom";
+import { clearRoomSlot, createRoom, placeRoomItem, roomItem } from "./room";
 import { spriteModelForGenome } from "./spriteCatalog";
 import { currentTimePeriod, TIME_PERIOD_LABELS, type TimePeriod } from "./timeOfDay";
-import type { NimviCareAction, NimviReaction, NimviSave } from "./types";
+import type { NimviCareAction, NimviReaction, NimviSave, RoomItemId, RoomSlot } from "./types";
+
+const DEV_SAVE_KEY = "nimvi.dev.save.v1";
 
 const formatAge = (bornAt: number) => {
   const minutes = Math.max(1, Math.floor((Date.now() - bornAt) / 60_000));
@@ -34,6 +38,10 @@ export function NimviGame() {
   const [notice, setNotice] = useState("Ele ainda está entendendo este lugar.");
   const [copied, setCopied] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
+  const [devMode, setDevMode] = useState(false);
+  const [decorating, setDecorating] = useState(false);
+  const [selectedRoomItem, setSelectedRoomItem] = useState<RoomItemId | null>(null);
+  const [clearRoomMode, setClearRoomMode] = useState(false);
   const spriteRef = useRef<NimviSpriteHandle>(null);
   const reactionTimer = useRef<number | null>(null);
 
@@ -50,16 +58,19 @@ export function NimviGame() {
   }, []);
 
   const persist = useCallback((next: NimviSave) => {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+    localStorage.setItem(devMode ? DEV_SAVE_KEY : SAVE_KEY, JSON.stringify(next));
     setSave(next);
-  }, []);
+  }, [devMode]);
 
   useEffect(() => {
     const hydrateTimer = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       const visiting = params.get("dna");
+      const isDev = params.get("dev") === "1";
+      setDevMode(isDev);
       if (visiting) setVisitorSeed(visiting);
-      const existing = parseSave(localStorage.getItem(SAVE_KEY));
+      const storageKey = isDev ? DEV_SAVE_KEY : SAVE_KEY;
+      const existing = parseSave(localStorage.getItem(storageKey), isDev);
       if (existing) {
         const hour = new Date().getHours();
         const advanced = advanceCare(existing);
@@ -72,12 +83,17 @@ export function NimviGame() {
             nightVisits: advanced.metrics.nightVisits + (hour >= 20 || hour < 6 ? 1 : 0),
           },
         };
-        persist(next);
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        setSave(next);
+      } else if (isDev && !visiting) {
+        const next = createFreshSave("NIMVI-DEV-ROOM", true);
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        setSave(next);
       }
       setReady(true);
     }, 0);
     return () => window.clearTimeout(hydrateTimer);
-  }, [persist]);
+  }, []);
 
   useEffect(() => {
     if (!hasLocalSave || visitorSeed) return;
@@ -85,12 +101,12 @@ export function NimviGame() {
       setSave((current) => {
         if (!current) return current;
         const next = advanceCare(current);
-        localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+        localStorage.setItem(devMode ? DEV_SAVE_KEY : SAVE_KEY, JSON.stringify(next));
         return next;
       });
     }, CARE_TICK_MS);
     return () => window.clearInterval(timer);
-  }, [hasLocalSave, visitorSeed]);
+  }, [hasLocalSave, visitorSeed, devMode]);
 
   const localSeed = save?.seed;
   const illness = save?.care.illness;
@@ -129,7 +145,7 @@ export function NimviGame() {
             hiddenSeconds: advanced.metrics.hiddenSeconds + elapsed,
           },
         };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+        localStorage.setItem(devMode ? DEV_SAVE_KEY : SAVE_KEY, JSON.stringify(next));
         return next;
       });
     };
@@ -154,7 +170,7 @@ export function NimviGame() {
       window.removeEventListener("resize", onResize);
       if (resizeTimer) window.clearTimeout(resizeTimer);
     };
-  }, [localSeed]);
+  }, [localSeed, devMode]);
 
   const react = useCallback((nextReaction: NimviReaction, nextNotice: string) => {
     if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
@@ -174,6 +190,76 @@ export function NimviGame() {
     const result = performCareAction(save, kind);
     persist({ ...result.save, lastSeenAt: Date.now() });
     react(result.reaction, result.notice);
+  };
+
+  const updateRoom = (room: NimviSave["room"], nextNotice: string) => {
+    if (!save || visitorSeed) return;
+    persist({ ...save, room, lastSeenAt: Date.now() });
+    react("love", nextNotice);
+  };
+
+  const placeSelectedItem = (slot: RoomSlot) => {
+    if (!save) return;
+    const selectedCatalogItem = roomItem(selectedRoomItem);
+    const occupied = Boolean(save.room.slots[slot]);
+    const clickedRemovalMark = occupied && (!selectedRoomItem || !selectedCatalogItem?.slots.includes(slot));
+    if (clearRoomMode || clickedRemovalMark) {
+      updateRoom(clearRoomSlot(save.room, slot), "O espaço ficou livre para uma nova ideia.");
+      setClearRoomMode(false);
+      return;
+    }
+    if (!selectedRoomItem) return;
+    const next = placeRoomItem(save.room, selectedRoomItem, slot);
+    if (next === save.room) {
+      setNotice("Esse item não cabe nesse espaço.");
+      return;
+    }
+    updateRoom(next, `${roomItem(selectedRoomItem)?.name ?? "O item"} encontrou seu lugar.`);
+    setSelectedRoomItem(null);
+  };
+
+  const chooseRoomItem = (item: RoomItemId) => {
+    if (!save) return;
+    const catalogItem = roomItem(item);
+    setClearRoomMode(false);
+    if (catalogItem?.category === "parede" || catalogItem?.category === "piso") {
+      updateRoom(placeRoomItem(save.room, item), `${catalogItem.name} mudou o clima da casa.`);
+      setSelectedRoomItem(null);
+      return;
+    }
+    setSelectedRoomItem(item);
+    setNotice(`Onde devemos colocar ${catalogItem?.name.toLowerCase()}?`);
+  };
+
+  const interactWithRoom = (itemId: RoomItemId) => {
+    if (!save || visitorSeed) return;
+    const item = roomItem(itemId);
+    const room = save.room;
+    if (item?.interactive === "tv") {
+      const tvOn = !room.objectStates.tvOn;
+      updateRoom({ ...room, objectStates: { ...room.objectStates, tvOn } }, tvOn ? "A TV acendeu. Ele ficou atento aos pixels." : "A TV descansou e o quarto ficou quieto.");
+    } else if (item?.interactive === "lamp") {
+      const lampOn = !room.objectStates.lampOn;
+      updateRoom({ ...room, objectStates: { ...room.objectStates, lampOn } }, lampOn ? "Uma luz morna envolveu o quarto." : "A luminária se apagou devagar.");
+    } else if (item?.interactive === "plant") {
+      const growth = Math.min(2, room.objectStates.plantGrowth + 1);
+      updateRoom({ ...room, objectStates: { ...room.objectStates, plantGrowth: growth, plantLastWateredAt: Date.now() } }, growth === 2 ? "A planta floresceu. Ele parece orgulhoso." : "A planta bebeu cada gota.");
+    } else if (item?.interactive === "toy") {
+      interact("play");
+    }
+  };
+
+  const devCare = (preset: "hungry" | "tired" | "sick" | "restore") => {
+    if (!save || !devMode) return;
+    const care = preset === "restore"
+      ? { ...save.care, hunger: 18, hygiene: 92, energy: 82, happiness: 72, health: 100, illness: "none" as const, neglectMinutes: 0, isSleeping: false, sleepStartedAt: null, lastActions: {} }
+      : preset === "hungry"
+        ? { ...save.care, hunger: 92, energy: 55, isSleeping: false, sleepStartedAt: null, lastActions: {} }
+        : preset === "tired"
+          ? { ...save.care, energy: 12, hunger: 35, isSleeping: false, sleepStartedAt: null, lastActions: {} }
+          : { ...save.care, health: 58, illness: "cold" as const, neglectMinutes: 210, isSleeping: false, sleepStartedAt: null, lastActions: {} };
+    persist({ ...save, care });
+    setNotice(`DEV: estado ${preset} aplicado.`);
   };
 
   const share = async (seed: string) => {
@@ -242,7 +328,7 @@ export function NimviGame() {
     <main className="game-shell" style={{ "--nimvi-accent": palette.accent, "--nimvi-body": palette.body } as React.CSSProperties}>
       <header className="topbar">
         <Link className="brand-mark small" href={withBasePath("/")} aria-label="Nimvi, início">nimvi<i /></Link>
-        <div className="status-pill"><span /> {visitorSeed ? "visita" : "vivendo agora"}</div>
+        <div className={`status-pill ${devMode ? "dev" : ""}`}><span /> {devMode ? "conta dev" : visitorSeed ? "visita" : "vivendo agora"}</div>
         <button className="quiet-button" onClick={() => share(genome.seed)}>{copied ? "link copiado" : "visitar por link"}</button>
       </header>
 
@@ -253,7 +339,17 @@ export function NimviGame() {
       )}
 
       <div className="game-layout">
-      <section className="habitat" aria-label={`Habitat de ${genome.name}`}>
+      <section
+        className={`habitat wallpaper-${activeSave.room.wallpaper} floor-${activeSave.room.floor} ${activeSave.room.objectStates.tvOn ? "tv-on" : ""}`}
+        style={{
+          "--floor-stone-image": `url("${withBasePath("/floors/porcelain-white.png")}?v=1")`,
+          "--floor-wood-image": `url("${withBasePath("/floors/vinyl-oak.png")}?v=1")`,
+          "--wall-mint-image": `url("${withBasePath("/wallpapers/botanical-mint.png")}?v=1")`,
+          "--wall-dusk-image": `url("${withBasePath("/wallpapers/celestial-violet.png")}?v=1")`,
+          "--wall-peach-image": `url("${withBasePath("/wallpapers/geometric-peach.png")}?v=1")`,
+        } as CSSProperties}
+        aria-label={`Habitat de ${genome.name}`}
+      >
         <div className={`pixel-window time-${timePeriod}`} aria-hidden="true">
           <span className="time-label">{TIME_PERIOD_LABELS[timePeriod]}</span>
           <span className="sun" />
@@ -262,7 +358,7 @@ export function NimviGame() {
           <span className="horizon" />
           <i className="star one" /><i className="star two" /><i className="star three" />
         </div>
-        <div className="shelf" aria-hidden="true"><span /><span /><span /></div>
+        <NimviRoom room={activeSave.room} decorating={decorating && !visitorSeed} selectedItem={selectedRoomItem} clearMode={clearRoomMode} onSlot={placeSelectedItem} onObject={interactWithRoom} />
         <div className="ambient-dots" aria-hidden="true"><i /><i /><i /></div>
         <button
           className={`creature-stage reaction-${reaction}`}
@@ -293,6 +389,22 @@ export function NimviGame() {
           </div>
         </div>
       </section>
+
+      <details className="panel-toggle decorate-toggle" onToggle={(event) => {
+        const open = event.currentTarget.open;
+        setDecorating(open);
+        if (!open) {
+          setSelectedRoomItem(null);
+          setClearRoomMode(false);
+        }
+      }}>
+        <summary><span>Decorar</span><strong>{activeSave.room.inventory.length} itens<i aria-hidden="true" /></strong></summary>
+        <div className="toggle-content">
+          {visitorSeed ? <p>O quarto de uma visita só pode ser observado.</p> : (
+            <RoomInventory room={activeSave.room} selectedItem={selectedRoomItem} clearMode={clearRoomMode} onSelect={chooseRoomItem} onClear={() => { setSelectedRoomItem(null); setClearRoomMode((current) => !current); }} />
+          )}
+        </div>
+      </details>
 
       <details className="panel-toggle actions-toggle">
         <summary>
@@ -359,9 +471,23 @@ export function NimviGame() {
             <span>tratamentos <strong>{activeSave.metrics.medicines}</strong></span>
           </section>
           <button className="portrait-button" onClick={() => spriteRef.current?.download()}>Salvar retrato</button>
+          {!devMode && !visitorSeed && <a className="dev-account-link" href="?dev=1">Abrir conta DEV de testes</a>}
           <p className="privacy-copy">Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
         </div>
       </details>
+      {devMode && !visitorSeed && (
+        <details className="panel-toggle dev-toggle">
+          <summary><span>Laboratório DEV</span><strong>não afeta seu Nimvi<i aria-hidden="true" /></strong></summary>
+          <div className="toggle-content dev-controls">
+            <button onClick={() => devCare("hungry")}>Testar fome</button>
+            <button onClick={() => devCare("tired")}>Testar sono</button>
+            <button onClick={() => devCare("sick")}>Testar doença</button>
+            <button onClick={() => devCare("restore")}>Restaurar cuidados</button>
+            <button onClick={() => save && updateRoom(createRoom(true), "DEV: quarto restaurado.")}>Resetar quarto</button>
+            <a href="?">Voltar à conta normal</a>
+          </div>
+        </details>
+      )}
       </div>
       </div>
     </main>

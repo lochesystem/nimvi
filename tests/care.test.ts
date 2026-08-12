@@ -64,7 +64,7 @@ test("cooldown impede interação infinita", () => {
   assert.equal(second.accepted, false);
 });
 
-test("save antigo migra sem trocar DNA e recebe o estado de cuidado", () => {
+test("save antigo migra sem trocar DNA e recebe cuidado e quarto", () => {
   const raw = JSON.stringify({
     version: 1,
     seed: "DNALEGADO123",
@@ -74,9 +74,10 @@ test("save antigo migra sem trocar DNA e recebe o estado de cuidado", () => {
     metrics: { visits: 4, interactions: 2, focusReturns: 1, hiddenSeconds: 20, resizes: 0, nightVisits: 0 },
   });
   const migrated = parseSave(raw);
-  assert.equal(migrated?.version, 2);
+  assert.equal(migrated?.version, 3);
   assert.equal(migrated?.seed, "DNALEGADO123");
   assert.ok(migrated?.care);
+  assert.ok(migrated?.room);
   assert.equal(migrated?.metrics.meals, 0);
 });
 

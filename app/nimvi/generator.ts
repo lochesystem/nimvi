@@ -1,5 +1,6 @@
 import type { NimviGenome, NimviMetrics, NimviSave, PixelFrame } from "./types";
 import { createCare, normalizeCare } from "./care.ts";
+import { createRoom, normalizeRoom } from "./room.ts";
 
 export const GRID_SIZE = 32;
 export const SAVE_KEY = "nimvi.save.v1";
@@ -73,10 +74,10 @@ export function generateGenome(inputSeed: string): NimviGenome {
   };
 }
 
-export function createFreshSave(seed = createSeed()): NimviSave {
+export function createFreshSave(seed = createSeed(), dev = false): NimviSave {
   const now = Date.now();
   return {
-    version: 2,
+    version: 3,
     seed,
     bornAt: now,
     lastSeenAt: now,
@@ -95,17 +96,18 @@ export function createFreshSave(seed = createSeed()): NimviSave {
       refusals: 0,
     },
     care: createCare(now),
+    room: createRoom(dev),
   };
 }
 
-export function parseSave(raw: string | null): NimviSave | null {
+export function parseSave(raw: string | null, dev = false): NimviSave | null {
   if (!raw) return null;
   try {
     const value = JSON.parse(raw) as Partial<NimviSave>;
-    if ((value.version !== 1 && value.version !== 2) || typeof value.seed !== "string" || !value.metrics) return null;
+    if ((value.version !== 1 && value.version !== 2 && value.version !== 3) || typeof value.seed !== "string" || !value.metrics) return null;
     const now = Date.now();
     return {
-      version: 2,
+      version: 3,
       seed: normalizeSeed(value.seed),
       bornAt: Number(value.bornAt) || Date.now(),
       lastSeenAt: Number(value.lastSeenAt) || Date.now(),
@@ -124,6 +126,7 @@ export function parseSave(raw: string | null): NimviSave | null {
         refusals: Math.max(0, Number(value.metrics.refusals) || 0),
       },
       care: normalizeCare(value.care, now),
+      room: normalizeRoom(value.room, dev),
     };
   } catch {
     return null;

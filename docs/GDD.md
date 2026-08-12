@@ -1,5 +1,5 @@
 ---
-versão: 0.2.0
+versão: 0.3.0
 data: 2026-08-11
 status: implementado
 fonte_de_verdade: build web em app/
@@ -37,3 +37,12 @@ Voltar → observar o estado → entender a necessidade → oferecer um cuidado 
 - Gerar doença apenas por negligência acumulada, sem morte.
 - Retirar evolução da interface até o ciclo de vida ser desenhado.
 - Exportar retrato e copiar link de visita.
+
+## Casa Viva 0.3
+
+- O Nimvi permanece centralizado; móveis e ambiente produzem presença sem locomoção improvisada.
+- O quarto usa quatro slots laterais compatíveis; não há objetos diante do Nimvi, preservando corpo, asas, antenas e caudas.
+- Inventário inicial contém papéis de parede, pisos, móveis e objetos de chão.
+- TV, luminária, planta e caixa de brinquedos possuem interações contextuais.
+- A decoração é persistida localmente e saves antigos migram sem trocar o DNA.
+- O perfil `?dev=1` usa armazenamento separado, catálogo completo e presets de necessidades para QA.
