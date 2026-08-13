@@ -65,11 +65,12 @@ export type NimviRoom = {
 };
 
 export type NimviSave = {
-  version: 3;
+  version: 4;
   seed: string;
   bornAt: number;
   lastSeenAt: number;
   bond: number;
+  evolutionStage: 1 | 2;
   metrics: NimviMetrics;
   care: NimviCare;
   room: NimviRoom;

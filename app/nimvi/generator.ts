@@ -77,11 +77,12 @@ export function generateGenome(inputSeed: string): NimviGenome {
 export function createFreshSave(seed = createSeed(), dev = false): NimviSave {
   const now = Date.now();
   return {
-    version: 3,
+    version: 4,
     seed,
     bornAt: now,
     lastSeenAt: now,
     bond: 1,
+    evolutionStage: 1,
     metrics: {
       visits: 1,
       interactions: 0,
@@ -104,14 +105,15 @@ export function parseSave(raw: string | null, dev = false): NimviSave | null {
   if (!raw) return null;
   try {
     const value = JSON.parse(raw) as Partial<NimviSave>;
-    if ((value.version !== 1 && value.version !== 2 && value.version !== 3) || typeof value.seed !== "string" || !value.metrics) return null;
+    if ((value.version !== 1 && value.version !== 2 && value.version !== 3 && value.version !== 4) || typeof value.seed !== "string" || !value.metrics) return null;
     const now = Date.now();
     return {
-      version: 3,
+      version: 4,
       seed: normalizeSeed(value.seed),
       bornAt: Number(value.bornAt) || Date.now(),
       lastSeenAt: Number(value.lastSeenAt) || Date.now(),
       bond: Math.max(0, Math.min(100, Number(value.bond) || 0)),
+      evolutionStage: value.evolutionStage === 2 ? 2 : 1,
       metrics: {
         visits: Math.max(1, Number(value.metrics.visits) || 1),
         interactions: Math.max(0, Number(value.metrics.interactions) || 0),

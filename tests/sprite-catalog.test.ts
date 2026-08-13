@@ -55,11 +55,32 @@ test("Tobiru possui um asset exclusivo para o estágio 2", async () => {
   await access(new URL("../public/sprites/nimvi-tobiru-stage2.png", import.meta.url));
 });
 
-test("a conta DEV possui controles para comparar os dois estágios do Tobiru", async () => {
+test("Velume possui um asset exclusivo para o estágio 2", async () => {
+  await access(new URL("../public/sprites/nimvi-velume-stage2.png", import.meta.url));
+});
+
+test("Soruli possui um asset exclusivo para o estágio 2", async () => {
+  await access(new URL("../public/sprites/nimvi-soruli-stage2.png", import.meta.url));
+});
+
+test("Lumeli possui um asset exclusivo para o estágio 2", async () => {
+  await access(new URL("../public/sprites/nimvi-lumeli-stage2.png", import.meta.url));
+});
+
+test("a conta DEV possui controles para comparar os estágios evolutivos", async () => {
   const game = await import("node:fs/promises").then(({ readFile }) => readFile(new URL("../app/nimvi/NimviGame.tsx", import.meta.url), "utf8"));
   assert.match(game, /Iniciar evolução Tobiru/);
   assert.match(game, /Ver Tobiru estágio 1/);
   assert.match(game, /Ver Tobiru estágio 2/);
+  assert.match(game, /Iniciar evolução Velume/);
+  assert.match(game, /Ver Velume estágio 1/);
+  assert.match(game, /Ver Velume estágio 2/);
+  assert.match(game, /Iniciar evolução Soruli/);
+  assert.match(game, /Ver Soruli estágio 1/);
+  assert.match(game, /Ver Soruli estágio 2/);
+  assert.match(game, /Iniciar evolução Lumeli/);
+  assert.match(game, /Ver Lumeli estágio 1/);
+  assert.match(game, /Ver Lumeli estágio 2/);
 });
 
 test("carinho e brincadeira usam ciclos frontais com ritmos próprios", () => {

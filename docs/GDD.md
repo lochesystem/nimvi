@@ -68,3 +68,31 @@ O plano de agenda local, Web Push e Google Calendar está em `docs/INTEGRACOES-E
 - A conta DEV oferece uma demonstração isolada em laboratório: carga de energia, tela branca, silhueta, revelação e reação feliz.
 - A demonstração prepara um Tobiru de teste e mantém o estágio 2 no habitat ao terminar; controles DEV alternam livremente entre os dois estágios.
 - O GIF de demonstração serve como QA e apresentação; critérios reais de evolução permanecem para uma etapa futura.
+
+## Protótipo de evolução — Velume
+
+- Velume possui um estágio 2 mais alto e maduro, preservando folhas, chifre, quatro patas e cauda espiral.
+- O estágio 2 tem quatro frames de idle e quatro frames de felicidade, ambos disponíveis para comparação na conta DEV.
+- A demonstração usa o mesmo laboratório e sequência visual do Tobiru, com textos e asset próprios do Velume.
+
+## Protótipo de evolução — Soruli
+
+- Soruli possui um estágio 2 mais alto e expressivo, preservando o corpo de caracol, as antenas e a grande concha espiral.
+- A concha ganha uma segunda borda ornamental e uma crista de cristais, criando uma mudança clara sem descaracterizar o modelo.
+- A conta DEV permite iniciar a evolução no laboratório ou comparar diretamente os estágios 1 e 2.
+
+## Protótipo de evolução — Lumeli
+
+- Lumeli evolui para uma lanterna viva mais alta, mantendo o corpo de sino, o aro luminoso e as duas pernas finas.
+- O estágio 2 ganha uma borda inferior ornamental, aletas laterais simétricas e uma joia frontal.
+- A conta DEV permite iniciar a evolução no laboratório ou comparar diretamente os estágios 1 e 2.
+
+## Condição comum para o estágio 2
+
+- Ter pelo menos 3 dias de vida.
+- Alcançar 20% de vínculo.
+- Estar saudável no momento da evolução.
+- A evolução exige confirmação explícita; ausência não reduz progresso e doença apenas adia o evento.
+- As condições são verificadas no save normal e a evolução é persistida no navegador.
+- Somente Tobiru, Velume, Soruli e Lumeli podem evoluir nesta versão, pois são os únicos modelos com estágio 2 desenhado e animado.
+- Modelos sem arte de evolução não exibem painel, botão ou promessa de evolução.

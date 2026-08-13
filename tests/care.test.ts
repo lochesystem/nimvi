@@ -74,7 +74,8 @@ test("save antigo migra sem trocar DNA e recebe cuidado e quarto", () => {
     metrics: { visits: 4, interactions: 2, focusReturns: 1, hiddenSeconds: 20, resizes: 0, nightVisits: 0 },
   });
   const migrated = parseSave(raw);
-  assert.equal(migrated?.version, 3);
+  assert.equal(migrated?.version, 4);
+  assert.equal(migrated?.evolutionStage, 1);
   assert.equal(migrated?.seed, "DNALEGADO123");
   assert.ok(migrated?.care);
   assert.ok(migrated?.room);

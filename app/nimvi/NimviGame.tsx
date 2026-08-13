@@ -14,6 +14,7 @@ import {
 } from "./generator";
 import { advanceCare, careMood, CARE_TICK_MS, performCareAction } from "./care";
 import { EvolutionLab } from "./EvolutionLab";
+import { EVOLUTIONS, evolutionForModel, evolutionReadiness } from "./evolution";
 import { addFriend, decodeRoomSnapshot, DEV_FRIENDS_KEY, encodeRoomSnapshot, FRIENDS_KEY, friendVisitPath, parseFriends, removeFriend, type NimviFriend } from "./friends";
 import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
 import { NimviRoom, RoomInventory } from "./NimviRoom";
@@ -25,6 +26,16 @@ import type { NimviCareAction, NimviReaction, NimviSave, RoomItemId, RoomSlot } 
 
 const DEV_SAVE_KEY = "nimvi.dev.save.v1";
 const TOBIRU_DEV_SEED = "N2TOBIRU0000";
+const VELUME_DEV_SEED = "N2VELUME0004";
+const SORULI_DEV_SEED = "N2SORULI0003";
+const LUMELI_DEV_SEED = "N2LUMELI0013";
+type DevEvolutionModel = "tobiru" | "velume" | "soruli" | "lumeli";
+const DEV_EVOLUTIONS = {
+  tobiru: { ...EVOLUTIONS[7], seed: TOBIRU_DEV_SEED },
+  velume: { ...EVOLUTIONS[2], seed: VELUME_DEV_SEED },
+  soruli: { ...EVOLUTIONS[4], seed: SORULI_DEV_SEED },
+  lumeli: { ...EVOLUTIONS[9], seed: LUMELI_DEV_SEED },
+} as const;
 
 const formatAge = (bornAt: number) => {
   const minutes = Math.max(1, Math.floor((Date.now() - bornAt) / 60_000));
@@ -51,7 +62,9 @@ export function NimviGame() {
   const [selectedRoomItem, setSelectedRoomItem] = useState<RoomItemId | null>(null);
   const [clearRoomMode, setClearRoomMode] = useState(false);
   const [evolutionDemo, setEvolutionDemo] = useState(false);
-  const [devTobiruStage, setDevTobiruStage] = useState<1 | 2>(1);
+  const [normalEvolutionDemo, setNormalEvolutionDemo] = useState(false);
+  const [devEvolutionModel, setDevEvolutionModel] = useState<DevEvolutionModel>("tobiru");
+  const [devEvolutionStage, setDevEvolutionStage] = useState<1 | 2>(1);
   const spriteRef = useRef<NimviSpriteHandle>(null);
   const reactionTimer = useRef<number | null>(null);
   const speechTimer = useRef<number | null>(null);
@@ -292,13 +305,25 @@ export function NimviGame() {
     showNotice(`DEV: estado ${preset} aplicado.`);
   };
 
-  const startTobiruEvolution = () => {
+  const prepareDevEvolution = (model: DevEvolutionModel, stage: 1 | 2) => {
     if (!save || !devMode) return;
-    persist({ ...save, seed: TOBIRU_DEV_SEED, lastSeenAt: Date.now() });
-    setDevTobiruStage(1);
+    persist({ ...save, seed: DEV_EVOLUTIONS[model].seed, lastSeenAt: Date.now() });
+    setDevEvolutionModel(model);
+    setDevEvolutionStage(stage);
+  };
+  const startEvolution = (model: DevEvolutionModel) => {
+    prepareDevEvolution(model, 1);
     setEvolutionDemo(true);
   };
-  const completeTobiruEvolution = useCallback(() => setDevTobiruStage(2), []);
+  const completeDevEvolution = useCallback(() => setDevEvolutionStage(2), []);
+  const completeNormalEvolution = useCallback(() => {
+    setSave((current) => {
+      if (!current) return current;
+      const next: NimviSave = { ...current, evolutionStage: 2, lastSeenAt: Date.now() };
+      localStorage.setItem(devMode ? DEV_SAVE_KEY : SAVE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [devMode]);
 
   const copyLink = async (seed: string, invitation = false, room?: NimviSave["room"]) => {
     const url = new URL(window.location.href);
@@ -345,6 +370,14 @@ export function NimviGame() {
       metrics: { ...visitor.metrics, visits: 5, interactions: 8, focusReturns: 4, hiddenSeconds: 900, resizes: 1, nightVisits: 2 },
     };
   }, [genome, save, visitorSeed, visitorRoom]);
+  const evolution = genome ? evolutionForModel(genome.model) : null;
+  const evolutionStatus = activeSave ? evolutionReadiness(activeSave) : null;
+  const startNormalEvolution = () => {
+    if (!evolution || !evolutionStatus?.ready || !save || visitorSeed || save.evolutionStage === 2) return;
+    if (!window.confirm(`${genome?.name} está pronto para alcançar o estágio 2. Começar a evolução?`)) return;
+    setNormalEvolutionDemo(true);
+    setEvolutionDemo(true);
+  };
   const trait = activeSave ? getTrait(activeSave.metrics) : null;
 
   useEffect(() => {
@@ -433,12 +466,16 @@ export function NimviGame() {
           <NimviSprite
             ref={spriteRef}
             genome={genome}
-            modelSrc={devMode && genome.model === 7 && devTobiruStage === 2 ? withBasePath("/sprites/nimvi-tobiru-stage2.png?v=1") : undefined}
+            modelSrc={devMode
+              ? genome.model === DEV_EVOLUTIONS[devEvolutionModel].model && devEvolutionStage === 2
+                ? withBasePath(DEV_EVOLUTIONS[devEvolutionModel].stage2Src)
+                : undefined
+              : evolution && activeSave.evolutionStage === 2 ? withBasePath(evolution.stage2Src) : undefined}
             reaction={reaction}
             sleeping={activeSave.care.isSleeping}
             label={`${genome.name}, Nimvi ${trait.name.toLowerCase()}${activeSave.care.isSleeping ? ", dormindo" : ""}`}
           />
-          {devMode && genome.model === 7 && <span className="dev-stage-badge">ESTÁGIO {devTobiruStage} · DEV</span>}
+          {devMode && genome.model === DEV_EVOLUTIONS[devEvolutionModel].model && <span className="dev-stage-badge">ESTÁGIO {devEvolutionStage} · DEV</span>}
           {reaction === "love" && <span className="pixel-heart">♥</span>}
           {activeSave.care.isSleeping && <span className="sleep-symbol" aria-hidden="true">z Z</span>}
         </button>
@@ -550,6 +587,28 @@ export function NimviGame() {
           <p className="privacy-copy">Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
         </div>
       </details>
+      {evolution && !visitorSeed && (
+        <details className="panel-toggle evolution-toggle">
+          <summary><span>Evolução</span><strong>estágio {activeSave.evolutionStage}<i aria-hidden="true" /></strong></summary>
+          <div className="toggle-content evolution-content">
+            {activeSave.evolutionStage === 2 ? (
+              <p>{genome.name} já alcançou sua forma evoluída.</p>
+            ) : (
+              <>
+                <p>A evolução só acontece quando ele estiver preparado. Nada é perdido enquanto você espera.</p>
+                <ul className="evolution-requirements">
+                  <li className={evolutionStatus?.ageReady ? "ready" : ""}>3 dias de vida</li>
+                  <li className={evolutionStatus?.bondReady ? "ready" : ""}>20% de vínculo</li>
+                  <li className={evolutionStatus?.healthReady ? "ready" : ""}>Saudável</li>
+                </ul>
+                <button className="evolution-start-button" disabled={!evolutionStatus?.ready} onClick={startNormalEvolution}>
+                  {evolutionStatus?.ready ? "Iniciar evolução" : "Ainda não está pronto"}
+                </button>
+              </>
+            )}
+          </div>
+        </details>
+      )}
       {!visitorSeed && (
         <details className="panel-toggle friends-toggle">
           <summary><span>Amigos</span><strong>{friends.length} {friends.length === 1 ? "Nimvi" : "Nimvis"}<i aria-hidden="true" /></strong></summary>
@@ -583,16 +642,30 @@ export function NimviGame() {
             <button onClick={() => devCare("sick")}>Testar doença</button>
             <button onClick={() => devCare("restore")}>Restaurar cuidados</button>
             <button onClick={() => save && updateRoom(createRoom(true), "DEV: quarto restaurado.")}>Resetar quarto</button>
-            <button onClick={startTobiruEvolution}>Iniciar evolução Tobiru</button>
-            <button onClick={() => { if (save) persist({ ...save, seed: TOBIRU_DEV_SEED }); setDevTobiruStage(1); }}>Ver Tobiru estágio 1</button>
-            <button onClick={() => { if (save) persist({ ...save, seed: TOBIRU_DEV_SEED }); setDevTobiruStage(2); }}>Ver Tobiru estágio 2</button>
+            <button onClick={() => startEvolution("tobiru")}>Iniciar evolução Tobiru</button>
+            <button onClick={() => prepareDevEvolution("tobiru", 1)}>Ver Tobiru estágio 1</button>
+            <button onClick={() => prepareDevEvolution("tobiru", 2)}>Ver Tobiru estágio 2</button>
+            <button onClick={() => startEvolution("velume")}>Iniciar evolução Velume</button>
+            <button onClick={() => prepareDevEvolution("velume", 1)}>Ver Velume estágio 1</button>
+            <button onClick={() => prepareDevEvolution("velume", 2)}>Ver Velume estágio 2</button>
+            <button onClick={() => startEvolution("soruli")}>Iniciar evolução Soruli</button>
+            <button onClick={() => prepareDevEvolution("soruli", 1)}>Ver Soruli estágio 1</button>
+            <button onClick={() => prepareDevEvolution("soruli", 2)}>Ver Soruli estágio 2</button>
+            <button onClick={() => startEvolution("lumeli")}>Iniciar evolução Lumeli</button>
+            <button onClick={() => prepareDevEvolution("lumeli", 1)}>Ver Lumeli estágio 1</button>
+            <button onClick={() => prepareDevEvolution("lumeli", 2)}>Ver Lumeli estágio 2</button>
             <a href="?">Voltar à conta normal</a>
           </div>
         </details>
       )}
       </div>
       </div>
-      {evolutionDemo && <EvolutionLab genome={genome} onClose={() => setEvolutionDemo(false)} onComplete={completeTobiruEvolution} />}
+      {evolutionDemo && <EvolutionLab
+        genome={genome}
+        evolution={normalEvolutionDemo && evolution ? evolution : DEV_EVOLUTIONS[devEvolutionModel]}
+        onClose={() => { setEvolutionDemo(false); setNormalEvolutionDemo(false); }}
+        onComplete={normalEvolutionDemo ? completeNormalEvolution : completeDevEvolution}
+      />}
     </main>
   );
 }
