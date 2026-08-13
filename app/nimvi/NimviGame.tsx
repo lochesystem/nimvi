@@ -17,6 +17,7 @@ import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
 import { NimviRoom, RoomInventory } from "./NimviRoom";
 import { clearRoomSlot, createRoom, placeRoomItem, roomItem } from "./room";
 import { spriteModelForGenome } from "./spriteCatalog";
+import { SPEECH_DURATION_MS, speechBubbleColumns } from "./speech";
 import { currentTimePeriod, TIME_PERIOD_LABELS, type TimePeriod } from "./timeOfDay";
 import type { NimviCareAction, NimviReaction, NimviSave, RoomItemId, RoomSlot } from "./types";
 
@@ -36,6 +37,7 @@ export function NimviGame() {
   const [visitorSeed, setVisitorSeed] = useState<string | null>(null);
   const [reaction, setReaction] = useState<NimviReaction>("idle");
   const [notice, setNotice] = useState("Ele ainda está entendendo este lugar.");
+  const [speechVisible, setSpeechVisible] = useState(true);
   const [copied, setCopied] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
   const [devMode, setDevMode] = useState(false);
@@ -44,6 +46,21 @@ export function NimviGame() {
   const [clearRoomMode, setClearRoomMode] = useState(false);
   const spriteRef = useRef<NimviSpriteHandle>(null);
   const reactionTimer = useRef<number | null>(null);
+  const speechTimer = useRef<number | null>(null);
+
+  const showNotice = useCallback((message: string) => {
+    if (speechTimer.current) window.clearTimeout(speechTimer.current);
+    setNotice(message);
+    setSpeechVisible(true);
+    speechTimer.current = window.setTimeout(() => setSpeechVisible(false), SPEECH_DURATION_MS);
+  }, []);
+
+  useEffect(() => {
+    speechTimer.current = window.setTimeout(() => setSpeechVisible(false), SPEECH_DURATION_MS);
+    return () => {
+      if (speechTimer.current) window.clearTimeout(speechTimer.current);
+    };
+  }, []);
 
   const hasLocalSave = Boolean(save);
   useEffect(() => {
@@ -113,10 +130,10 @@ export function NimviGame() {
   useEffect(() => {
     if (!illness || illness === "none" || visitorSeed) return;
     const timer = window.setTimeout(() => {
-      setNotice(illness === "stomach" ? "A barriga está doendo. Ele precisa de medicamento." : "Ele parece abatido e espirrou baixinho.");
+      showNotice(illness === "stomach" ? "A barriga está doendo. Ele precisa de medicamento." : "Ele parece abatido e espirrou baixinho.");
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [illness, visitorSeed]);
+  }, [illness, visitorSeed, showNotice]);
 
   useEffect(() => {
     if (!localSeed) return;
@@ -126,13 +143,13 @@ export function NimviGame() {
     const onVisibility = () => {
       if (document.hidden) {
         hiddenAt = Date.now();
-        setNotice(`${generateGenome(localSeed).name} foi sonhar um pouco.`);
+        showNotice(`${generateGenome(localSeed).name} foi sonhar um pouco.`);
         return;
       }
       const elapsed = hiddenAt ? Math.min(86_400, Math.floor((Date.now() - hiddenAt) / 1000)) : 0;
       hiddenAt = null;
       setReaction("wake");
-      setNotice("Você voltou. Ele percebeu.");
+      showNotice("Você voltou. Ele percebeu.");
       setSave((current) => {
         if (!current) return current;
         const advanced = advanceCare(current);
@@ -153,7 +170,7 @@ export function NimviGame() {
     const onResize = () => {
       if (resizeTimer) window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
-        setNotice("A casa mudou de tamanho. Curioso.");
+        showNotice("A casa mudou de tamanho. Curioso.");
         setSave((current) => {
           if (!current) return current;
           const next = { ...current, metrics: { ...current.metrics, resizes: current.metrics.resizes + 1 } };
@@ -170,14 +187,14 @@ export function NimviGame() {
       window.removeEventListener("resize", onResize);
       if (resizeTimer) window.clearTimeout(resizeTimer);
     };
-  }, [localSeed, devMode]);
+  }, [localSeed, devMode, showNotice]);
 
   const react = useCallback((nextReaction: NimviReaction, nextNotice: string) => {
     if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
     setReaction(nextReaction);
-    setNotice(nextNotice);
+    showNotice(nextNotice);
     reactionTimer.current = window.setTimeout(() => setReaction("idle"), 1_500);
-  }, []);
+  }, [showNotice]);
 
   const awaken = () => {
     const next = createFreshSave();
@@ -211,7 +228,7 @@ export function NimviGame() {
     if (!selectedRoomItem) return;
     const next = placeRoomItem(save.room, selectedRoomItem, slot);
     if (next === save.room) {
-      setNotice("Esse item não cabe nesse espaço.");
+      showNotice("Esse item não cabe nesse espaço.");
       return;
     }
     updateRoom(next, `${roomItem(selectedRoomItem)?.name ?? "O item"} encontrou seu lugar.`);
@@ -228,7 +245,7 @@ export function NimviGame() {
       return;
     }
     setSelectedRoomItem(item);
-    setNotice(`Onde devemos colocar ${catalogItem?.name.toLowerCase()}?`);
+    showNotice(`Onde devemos colocar ${catalogItem?.name.toLowerCase()}?`);
   };
 
   const interactWithRoom = (itemId: RoomItemId) => {
@@ -259,7 +276,7 @@ export function NimviGame() {
           ? { ...save.care, energy: 12, hunger: 35, isSleeping: false, sleepStartedAt: null, lastActions: {} }
           : { ...save.care, health: 58, illness: "cold" as const, neglectMinutes: 210, isSleeping: false, sleepStartedAt: null, lastActions: {} };
     persist({ ...save, care });
-    setNotice(`DEV: estado ${preset} aplicado.`);
+    showNotice(`DEV: estado ${preset} aplicado.`);
   };
 
   const share = async (seed: string) => {
@@ -277,6 +294,7 @@ export function NimviGame() {
 
   const activeSeed = visitorSeed || save?.seed;
   const genome = useMemo(() => activeSeed ? generateGenome(activeSeed) : null, [activeSeed]);
+  const speechColumns = speechBubbleColumns(notice);
   const activeSave = useMemo(() => {
     if (!visitorSeed || !genome) return save;
     const visitor = createFreshSave(genome.seed);
@@ -375,8 +393,16 @@ export function NimviGame() {
           {reaction === "love" && <span className="pixel-heart">♥</span>}
           {activeSave.care.isSleeping && <span className="sleep-symbol" aria-hidden="true">z Z</span>}
         </button>
-        <div className="floor-shadow" aria-hidden="true" />
-        <div className="speech-line" role="status">{notice}</div>
+        {speechVisible && (
+          <div
+            className="speech-bubble"
+            style={{ "--speech-columns": speechColumns } as CSSProperties}
+            role="status"
+            aria-live="polite"
+          >
+            {notice}
+          </div>
+        )}
       </section>
 
       <div className="game-sidebar">

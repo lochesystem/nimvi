@@ -45,6 +45,7 @@ test("server-renders the starter loading skeleton", async () => {
   assert.doesNotMatch(html, /Codex/);
   assert.match(html, /react-loading-skeleton/);
   assert.match(html, /role="status"/);
+  assert.match(html, /speech-bubble/);
 });
 
 test("keeps the loading skeleton scoped and disposable", async () => {

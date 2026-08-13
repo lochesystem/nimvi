@@ -252,8 +252,26 @@ button { color: inherit; }
 .nimvi-sprite { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 .pixel-heart { position: absolute; top: 12%; right: 22%; color: #ed5d78; font: 900 36px Arial; animation: heartUp 1.3s steps(5) forwards; }
 .sleep-symbol { position: absolute; top: 16%; right: 17%; color: #6c65aa; font: 900 24px/1 "Courier New", monospace; animation: sleepFloat 1.8s steps(4) infinite; }
-.floor-shadow { position: absolute; left: 50%; bottom: 68px; width: 190px; height: 18px; transform: translateX(-50%); background: rgba(23,20,43,.22); }
-.speech-line { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); width: min(90%, 580px); padding: 10px 14px; background: var(--panel); border: 2px solid var(--ink); text-align: center; font-size: .76rem; box-shadow: 3px 3px 0 var(--ink); }
+.speech-bubble {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 58%;
+  width: min(calc(var(--speech-columns) * 1ch + 32px), calc(100% - 32px));
+  min-width: 180px;
+  padding: 12px 16px;
+  transform: translateX(-50%);
+  border: 3px solid var(--ink);
+  background: var(--panel);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-size: .76rem;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+.speech-bubble::before, .speech-bubble::after { content: ""; position: absolute; left: 68%; pointer-events: none; }
+.speech-bubble::before { bottom: -17px; width: 18px; height: 17px; background: var(--ink); clip-path: polygon(0 0,100% 0,100% 5px,13px 5px,13px 10px,8px 10px,8px 17px,3px 17px,3px 10px,0 10px); }
+.speech-bubble::after { bottom: -9px; width: 8px; height: 9px; margin-left: 3px; background: var(--panel); clip-path: polygon(0 0,100% 0,100% 4px,5px 4px,5px 9px,0 9px); }
 
 .identity-panel { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: end; padding: 0 8px 2px; }
 .identity-compact .eyebrow { margin: 0 0 7px; }
@@ -342,8 +360,7 @@ button { color: inherit; }
   .pixel-window { top: 24px; right: 5%; width: 96px; height: 84px; border-width: 6px; }
   .shelf { top: 68px; left: 5%; width: 92px; }
   .creature-stage { bottom: calc(28% - 46px); width: clamp(205px, 60vw, 245px); height: clamp(205px, 60vw, 245px); }
-  .floor-shadow { bottom: calc(28% - 21px); width: 150px; height: 13px; }
-  .speech-line { bottom: 11px; width: calc(100% - 28px); padding: 8px 9px; font-size: .66rem; }
+  .speech-bubble { bottom: 58%; width: min(calc(var(--speech-columns) * 1ch + 26px), calc(100% - 24px)); min-width: 148px; padding: 9px 11px; border-width: 2px; font-size: .66rem; line-height: 1.35; box-shadow: 3px 3px 0 var(--ink); }
   .care-card { padding: 14px; }
   .actions-card > p { margin: 7px 0 10px; }
   .care-glance { margin-bottom: 10px; }
