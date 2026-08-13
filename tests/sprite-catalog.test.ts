@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { access } from "node:fs/promises";
 import test from "node:test";
 
 import { createSeed, generateGenome, PALETTES } from "../app/nimvi/generator.ts";
@@ -48,6 +49,17 @@ test("cada reação usa sua linha isolada da spritesheet", () => {
   assert.equal(spriteRowForReaction("love"), 1);
   assert.equal(spriteRowForReaction("play"), 1);
   assert.equal(spriteRowForReaction("wake"), 0);
+});
+
+test("Tobiru possui um asset exclusivo para o estágio 2", async () => {
+  await access(new URL("../public/sprites/nimvi-tobiru-stage2.png", import.meta.url));
+});
+
+test("a conta DEV possui controles para comparar os dois estágios do Tobiru", async () => {
+  const game = await import("node:fs/promises").then(({ readFile }) => readFile(new URL("../app/nimvi/NimviGame.tsx", import.meta.url), "utf8"));
+  assert.match(game, /Iniciar evolução Tobiru/);
+  assert.match(game, /Ver Tobiru estágio 1/);
+  assert.match(game, /Ver Tobiru estágio 2/);
 });
 
 test("carinho e brincadeira usam ciclos frontais com ritmos próprios", () => {

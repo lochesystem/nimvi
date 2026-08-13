@@ -20,6 +20,7 @@ type Props = {
   reaction: NimviReaction;
   label: string;
   sleeping?: boolean;
+  modelSrc?: string;
 };
 
 function neutralizeFrame(context: CanvasRenderingContext2D) {
@@ -73,7 +74,7 @@ function paint(
 }
 
 export const NimviSprite = forwardRef<NimviSpriteHandle, Props>(function NimviSprite(
-  { genome, reaction, label, sleeping = false },
+  { genome, reaction, label, sleeping = false, modelSrc },
   forwardedRef,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -96,12 +97,12 @@ export const NimviSprite = forwardRef<NimviSpriteHandle, Props>(function NimviSp
         paint(canvas, sheet, frame, reaction);
       }, spriteFrameDuration(reaction));
     };
-    sheet.src = model.src;
+    sheet.src = modelSrc ?? model.src;
     return () => {
       sheet.onload = null;
       if (timer !== null) window.clearInterval(timer);
     };
-  }, [genome, model.src, reaction, sleeping]);
+  }, [genome, model.src, modelSrc, reaction, sleeping]);
 
   useImperativeHandle(forwardedRef, () => ({
     download() {

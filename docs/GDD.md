@@ -60,3 +60,11 @@ Voltar → observar o estado → entender a necessidade → oferecer um cuidado 
 ## Integrações futuras
 
 O plano de agenda local, Web Push e Google Calendar está em `docs/INTEGRACOES-E-AGENDA.md`.
+
+## Protótipo de evolução — Tobiru
+
+- Tobiru possui um estágio 2 desenhado, maior e inequivocamente relacionado ao estágio 1.
+- O estágio 2 tem quatro frames de idle e quatro frames de felicidade; o ciclo de vida normal ainda não o ativa.
+- A conta DEV oferece uma demonstração isolada em laboratório: carga de energia, tela branca, silhueta, revelação e reação feliz.
+- A demonstração prepara um Tobiru de teste e mantém o estágio 2 no habitat ao terminar; controles DEV alternam livremente entre os dois estágios.
+- O GIF de demonstração serve como QA e apresentação; critérios reais de evolução permanecem para uma etapa futura.

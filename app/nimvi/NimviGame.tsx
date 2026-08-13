@@ -13,6 +13,7 @@ import {
   SAVE_KEY,
 } from "./generator";
 import { advanceCare, careMood, CARE_TICK_MS, performCareAction } from "./care";
+import { EvolutionLab } from "./EvolutionLab";
 import { addFriend, decodeRoomSnapshot, DEV_FRIENDS_KEY, encodeRoomSnapshot, FRIENDS_KEY, friendVisitPath, parseFriends, removeFriend, type NimviFriend } from "./friends";
 import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
 import { NimviRoom, RoomInventory } from "./NimviRoom";
@@ -23,6 +24,7 @@ import { currentTimePeriod, TIME_PERIOD_LABELS, type TimePeriod } from "./timeOf
 import type { NimviCareAction, NimviReaction, NimviSave, RoomItemId, RoomSlot } from "./types";
 
 const DEV_SAVE_KEY = "nimvi.dev.save.v1";
+const TOBIRU_DEV_SEED = "N2TOBIRU0000";
 
 const formatAge = (bornAt: number) => {
   const minutes = Math.max(1, Math.floor((Date.now() - bornAt) / 60_000));
@@ -48,6 +50,8 @@ export function NimviGame() {
   const [decorating, setDecorating] = useState(false);
   const [selectedRoomItem, setSelectedRoomItem] = useState<RoomItemId | null>(null);
   const [clearRoomMode, setClearRoomMode] = useState(false);
+  const [evolutionDemo, setEvolutionDemo] = useState(false);
+  const [devTobiruStage, setDevTobiruStage] = useState<1 | 2>(1);
   const spriteRef = useRef<NimviSpriteHandle>(null);
   const reactionTimer = useRef<number | null>(null);
   const speechTimer = useRef<number | null>(null);
@@ -288,6 +292,14 @@ export function NimviGame() {
     showNotice(`DEV: estado ${preset} aplicado.`);
   };
 
+  const startTobiruEvolution = () => {
+    if (!save || !devMode) return;
+    persist({ ...save, seed: TOBIRU_DEV_SEED, lastSeenAt: Date.now() });
+    setDevTobiruStage(1);
+    setEvolutionDemo(true);
+  };
+  const completeTobiruEvolution = useCallback(() => setDevTobiruStage(2), []);
+
   const copyLink = async (seed: string, invitation = false, room?: NimviSave["room"]) => {
     const url = new URL(window.location.href);
     url.search = "";
@@ -421,10 +433,12 @@ export function NimviGame() {
           <NimviSprite
             ref={spriteRef}
             genome={genome}
+            modelSrc={devMode && genome.model === 7 && devTobiruStage === 2 ? withBasePath("/sprites/nimvi-tobiru-stage2.png?v=1") : undefined}
             reaction={reaction}
             sleeping={activeSave.care.isSleeping}
             label={`${genome.name}, Nimvi ${trait.name.toLowerCase()}${activeSave.care.isSleeping ? ", dormindo" : ""}`}
           />
+          {devMode && genome.model === 7 && <span className="dev-stage-badge">ESTÁGIO {devTobiruStage} · DEV</span>}
           {reaction === "love" && <span className="pixel-heart">♥</span>}
           {activeSave.care.isSleeping && <span className="sleep-symbol" aria-hidden="true">z Z</span>}
         </button>
@@ -569,12 +583,16 @@ export function NimviGame() {
             <button onClick={() => devCare("sick")}>Testar doença</button>
             <button onClick={() => devCare("restore")}>Restaurar cuidados</button>
             <button onClick={() => save && updateRoom(createRoom(true), "DEV: quarto restaurado.")}>Resetar quarto</button>
+            <button onClick={startTobiruEvolution}>Iniciar evolução Tobiru</button>
+            <button onClick={() => { if (save) persist({ ...save, seed: TOBIRU_DEV_SEED }); setDevTobiruStage(1); }}>Ver Tobiru estágio 1</button>
+            <button onClick={() => { if (save) persist({ ...save, seed: TOBIRU_DEV_SEED }); setDevTobiruStage(2); }}>Ver Tobiru estágio 2</button>
             <a href="?">Voltar à conta normal</a>
           </div>
         </details>
       )}
       </div>
       </div>
+      {evolutionDemo && <EvolutionLab genome={genome} onClose={() => setEvolutionDemo(false)} onComplete={completeTobiruEvolution} />}
     </main>
   );
 }
