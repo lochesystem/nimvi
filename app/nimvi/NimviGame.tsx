@@ -13,6 +13,7 @@ import {
   SAVE_KEY,
 } from "./generator";
 import { advanceCare, careMood, CARE_TICK_MS, performCareAction } from "./care";
+import { addFriend, decodeRoomSnapshot, DEV_FRIENDS_KEY, encodeRoomSnapshot, FRIENDS_KEY, friendVisitPath, parseFriends, removeFriend, type NimviFriend } from "./friends";
 import { NimviSprite, type NimviSpriteHandle } from "./NimviSprite";
 import { NimviRoom, RoomInventory } from "./NimviRoom";
 import { clearRoomSlot, createRoom, placeRoomItem, roomItem } from "./room";
@@ -35,6 +36,9 @@ export function NimviGame() {
   const [save, setSave] = useState<NimviSave | null>(null);
   const [ready, setReady] = useState(false);
   const [visitorSeed, setVisitorSeed] = useState<string | null>(null);
+  const [friendInvite, setFriendInvite] = useState(false);
+  const [visitorRoom, setVisitorRoom] = useState<NimviSave["room"] | undefined>();
+  const [friends, setFriends] = useState<NimviFriend[]>([]);
   const [reaction, setReaction] = useState<NimviReaction>("idle");
   const [notice, setNotice] = useState("Ele ainda está entendendo este lugar.");
   const [speechVisible, setSpeechVisible] = useState(true);
@@ -85,7 +89,12 @@ export function NimviGame() {
       const visiting = params.get("dna");
       const isDev = params.get("dev") === "1";
       setDevMode(isDev);
-      if (visiting) setVisitorSeed(visiting);
+      if (visiting) {
+        setVisitorSeed(visiting);
+        setFriendInvite(params.get("amizade") === "1");
+        setVisitorRoom(decodeRoomSnapshot(params.get("quarto")));
+      }
+      setFriends(parseFriends(localStorage.getItem(isDev ? DEV_FRIENDS_KEY : FRIENDS_KEY)));
       const storageKey = isDev ? DEV_SAVE_KEY : SAVE_KEY;
       const existing = parseSave(localStorage.getItem(storageKey), isDev);
       if (existing) {
@@ -279,10 +288,12 @@ export function NimviGame() {
     showNotice(`DEV: estado ${preset} aplicado.`);
   };
 
-  const share = async (seed: string) => {
+  const copyLink = async (seed: string, invitation = false, room?: NimviSave["room"]) => {
     const url = new URL(window.location.href);
     url.search = "";
     url.searchParams.set("dna", seed);
+    if (invitation) url.searchParams.set("amizade", "1");
+    if (room) url.searchParams.set("quarto", encodeRoomSnapshot(room));
     try {
       await navigator.clipboard.writeText(url.toString());
       setCopied(true);
@@ -290,6 +301,23 @@ export function NimviGame() {
     } catch {
       window.prompt("Copie o link de visita:", url.toString());
     }
+  };
+
+  const persistFriends = (next: NimviFriend[]) => {
+    localStorage.setItem(devMode ? DEV_FRIENDS_KEY : FRIENDS_KEY, JSON.stringify(next));
+    setFriends(next);
+  };
+
+  const acceptFriend = () => {
+    if (!visitorSeed) return;
+    const next = addFriend(friends, visitorSeed, save?.seed, visitorRoom);
+    persistFriends(next);
+    showNotice(next === friends ? "Vocês já são amigos." : "Agora vocês são amigos!");
+  };
+
+  const forgetFriend = (seed: string) => {
+    persistFriends(removeFriend(friends, seed));
+    showNotice("A amizade foi removida deste navegador.");
   };
 
   const activeSeed = visitorSeed || save?.seed;
@@ -300,10 +328,11 @@ export function NimviGame() {
     const visitor = createFreshSave(genome.seed);
     return {
       ...visitor,
+      room: visitorRoom ?? visitor.room,
       bond: 28,
       metrics: { ...visitor.metrics, visits: 5, interactions: 8, focusReturns: 4, hiddenSeconds: 900, resizes: 1, nightVisits: 2 },
     };
-  }, [genome, save, visitorSeed]);
+  }, [genome, save, visitorSeed, visitorRoom]);
   const trait = activeSave ? getTrait(activeSave.metrics) : null;
 
   useEffect(() => {
@@ -347,12 +376,18 @@ export function NimviGame() {
       <header className="topbar">
         <Link className="brand-mark small" href={withBasePath("/")} aria-label="Nimvi, início">nimvi<i /></Link>
         <div className={`status-pill ${devMode ? "dev" : ""}`}><span /> {devMode ? "conta dev" : visitorSeed ? "visita" : "vivendo agora"}</div>
-        <button className="quiet-button" onClick={() => share(genome.seed)}>{copied ? "link copiado" : "visitar por link"}</button>
+        <button className="quiet-button" onClick={() => copyLink(visitorSeed ? genome.seed : save?.seed ?? genome.seed, !visitorSeed, activeSave.room)}>{copied ? "link copiado" : visitorSeed ? "compartilhar visita" : "convidar um amigo"}</button>
       </header>
 
       {visitorSeed && (
-        <div className="visitor-banner">
-          Você está visitando {genome.name}. <Link href={withBasePath("/")}>Voltar ao meu Nimvi</Link>
+        <div className={`visitor-banner ${friendInvite ? "friend-invite" : ""}`}>
+          <span>{friendInvite ? `${genome.name} quer fazer amizade com seu Nimvi.` : `Você está visitando ${genome.name}.`}</span>
+          {friendInvite && (
+            <button onClick={acceptFriend} disabled={friends.some((friend) => friend.seed === genome.seed)}>
+              {friends.some((friend) => friend.seed === genome.seed) ? "Amizade aceita" : "Aceitar amizade"}
+            </button>
+          )}
+          <a href={withBasePath("/")}>Voltar ao meu Nimvi</a>
         </div>
       )}
 
@@ -501,6 +536,30 @@ export function NimviGame() {
           <p className="privacy-copy">Seu Nimvi é reconstruído localmente pelo DNA. Nenhum hábito de outras páginas é observado.</p>
         </div>
       </details>
+      {!visitorSeed && (
+        <details className="panel-toggle friends-toggle">
+          <summary><span>Amigos</span><strong>{friends.length} {friends.length === 1 ? "Nimvi" : "Nimvis"}<i aria-hidden="true" /></strong></summary>
+          <div className="toggle-content friends-content">
+            <p>Ao aceitar um convite recebido, o Nimvi do seu amigo fica guardado neste navegador. Envie o seu para aparecer na coleção dele.</p>
+            <button className="friend-invite-button" onClick={() => copyLink(genome.seed, true, activeSave.room)}>{copied ? "Convite copiado" : "Copiar convite de amizade"}</button>
+            {friends.length === 0 ? <p className="empty-friends">Nenhum amigo ainda.</p> : (
+              <div className="friends-list">
+                {friends.map((friend) => {
+                  const friendGenome = generateGenome(friend.seed);
+                  return (
+                    <div className="friend-row" key={friend.seed}>
+                      <span><strong>{friendGenome.name}</strong><small>{friend.seed}</small></span>
+                      <a href={withBasePath(friendVisitPath(friend))}>Visitar</a>
+                      <button onClick={() => forgetFriend(friend.seed)} aria-label={`Remover amizade com ${friendGenome.name}`}>×</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <small className="friend-note">Nesta versão, seu amigo também precisa enviar o convite dele para a amizade aparecer nos dois navegadores.</small>
+          </div>
+        </details>
+      )}
       {devMode && !visitorSeed && (
         <details className="panel-toggle dev-toggle">
           <summary><span>Laboratório DEV</span><strong>não afeta seu Nimvi<i aria-hidden="true" /></strong></summary>

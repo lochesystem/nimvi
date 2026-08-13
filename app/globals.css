@@ -119,6 +119,9 @@ button { color: inherit; }
 .status-pill.dev { color: #9d3131; border-color: var(--coral); background: #fff1df; }
 .visitor-banner { margin: 10px 0; padding: 11px 14px; background: var(--ink); color: white; text-align: center; font-size: .8rem; }
 .visitor-banner a { color: var(--nimvi-accent); }
+.visitor-banner.friend-invite { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 14px; }
+.visitor-banner button { padding: 7px 11px; border: 2px solid white; background: var(--nimvi-accent); color: var(--ink); cursor: pointer; font: 800 .62rem/1 "Courier New", monospace; }
+.visitor-banner button:disabled { opacity: .62; cursor: default; }
 .game-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 430px); gap: 22px; align-items: center; min-height: calc(100svh - 74px); }
 .game-sidebar { display: flex; min-width: 0; flex-direction: column; gap: 16px; }
 
@@ -245,6 +248,18 @@ button { color: inherit; }
 .inventory-grid button > span:last-child { display: block; overflow: hidden; font-size: .5rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .clear-slot-button { width: 100%; margin-top: 9px; padding: 8px; border: 1px solid var(--ink); background: transparent; cursor: pointer; font-size: .62rem; font-weight: 800; }
 .dev-account-link { display: inline-block; margin: 14px 0 0 12px; color: var(--muted); font-size: .62rem; }
+.friends-content > p { margin-top: 0; }
+.friend-invite-button { width: 100%; min-height: 42px; border: 2px solid var(--ink); background: #f4bc69; cursor: pointer; font-weight: 800; }
+.empty-friends { padding: 12px; border: 1px dashed var(--muted); text-align: center; }
+.friends-list { display: grid; gap: 7px; margin-top: 12px; }
+.friend-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 32px; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid rgba(23,20,43,.3); background: var(--panel); }
+.friend-row span, .friend-row small { display: block; min-width: 0; }
+.friend-row strong { font-size: .72rem; }
+.friend-row small { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: .52rem; letter-spacing: .08em; text-overflow: ellipsis; }
+.friend-row a, .friend-row button { border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; font: 800 .58rem/1 "Courier New", monospace; text-decoration: none; }
+.friend-row a { padding: 8px; }
+.friend-row button { width: 32px; height: 32px; font-size: 1rem; }
+.friend-note { display: block; margin-top: 12px; color: var(--muted); font-size: .56rem; line-height: 1.45; }
 .dev-controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .dev-controls button, .dev-controls a { min-height: 37px; padding: 7px; border: 1px solid var(--ink); background: var(--panel); color: var(--ink); cursor: pointer; font-size: .6rem; font-weight: 800; text-align: center; text-decoration: none; }
 

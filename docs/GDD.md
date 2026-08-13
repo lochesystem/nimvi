@@ -46,3 +46,17 @@ Voltar → observar o estado → entender a necessidade → oferecer um cuidado 
 - TV, luminária, planta e caixa de brinquedos possuem interações contextuais.
 - A decoração é persistida localmente e saves antigos migram sem trocar o DNA.
 - O perfil `?dev=1` usa armazenamento separado, catálogo completo e presets de necessidades para QA.
+
+## Amizades 0.4
+
+- Cada tutor pode gerar um link de convite do próprio Nimvi.
+- Abrir um convite permite visitar a criatura antes de aceitar.
+- O convite leva uma fotografia compacta do quarto, incluindo papel de parede, piso, móveis e estados visuais dos objetos.
+- Aceitar guarda o DNA do amigo localmente e exige confirmação explícita.
+- A coleção de amigos permite visitar ou remover cada Nimvi.
+- Na versão local, reciprocidade acontece quando cada pessoa aceita o convite da outra.
+- Contas e backend serão necessários para solicitações bilaterais automáticas, sincronização entre dispositivos e interações sociais persistentes.
+
+## Integrações futuras
+
+O plano de agenda local, Web Push e Google Calendar está em `docs/INTEGRACOES-E-AGENDA.md`.

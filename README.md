@@ -6,6 +6,8 @@
 
 Vertical slice jogável com nascimento, DNA determinístico, 23 modelos animados, necessidades persistentes, Casa Viva decorável, vínculo, retrato e visita por link.
 
+O plano futuro de agenda, notificações e Google Calendar está documentado em [`docs/INTEGRACOES-E-AGENDA.md`](docs/INTEGRACOES-E-AGENDA.md).
+
 ## Como funciona
 
 - Cada instalação gera um DNA criptograficamente aleatório.
@@ -14,6 +16,7 @@ Vertical slice jogável com nascimento, DNA determinístico, 23 modelos animados
 - A spritesheet é recortada e colorida localmente; o servidor não precisa armazenar a criatura.
 - O save usa a chave versionada `nimvi.save.v1` no armazenamento do navegador.
 - Links com `?dna=...` abrem uma visita sem substituir o Nimvi local.
+- Links com `?dna=...&amizade=1` permitem aceitar e guardar um Nimvi na coleção local de amigos.
 - O quarto possui quatro posições laterais seguras, inventário local e objetos interativos.
 - `?dev=1` abre um perfil de testes separado, com catálogo completo e controles de estado.
 
